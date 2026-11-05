@@ -629,6 +629,8 @@ function dayDiff(a, b) {
   );
 }
 
+
+
 function normalizeRecord(o, i) {
   const rawSup = pick(o, [
     "Supplier", "supplier_name", "ซัพพลายเออร์", "Vendor"
@@ -652,13 +654,25 @@ function normalizeRecord(o, i) {
   const returned =
     /ส่งคืนแล้ว|คืนแล้ว|completed|returned|closed|complete/i.test(rawStatus) ||
     !!pick(o, ["Return Date", "วันที่ส่งคืน"]);
-   
-const id = pick(o, [
-  "product_sn",
-  "product sn",
-  "Product SN",
-  "PRODUCT_SN"
-]) || `ROW-${i + 1}`;
+
+  // Trade-In No. รองรับชื่อคอลัมน์หลายรูปแบบ
+  const id = pick(o, [
+    "Trade-In No.",
+    "Trade In No.",
+    "Trade-In No",
+    "Trade In No",
+    "Trade-In Number",
+    "Trade In Number",
+    "TradeIn No",
+    "TradeInNo",
+    "tradein_no",
+    "trade_in_no",
+    "tradein_number",
+    "product_sn",
+    "product sn",
+    "Product SN",
+    "PRODUCT_SN"
+  ]) || `ROW-${i + 1}`;
 
   const branch = pick(o, [
     "Branch Name", "สาขา", "ชื่อสาขา", "Branch",
@@ -679,7 +693,9 @@ const id = pick(o, [
     ? Number(rawAge)
     : dt ? dayDiff(dt, new Date()) : null;
 
-  const snapshot = parseDate(pick(o, ["date_stock", "Snapshot Date"]));
+  const snapshot = parseDate(pick(o, [
+    "date_stock", "Snapshot Date"
+  ]));
 
   if (snapshot && age != null) {
     age += Math.max(0, dayDiff(snapshot, new Date()));
@@ -700,31 +716,29 @@ const id = pick(o, [
           : "normal";
 
   return {
-    id:String(id),
-    branch:String(branch || code || "-"),
-    code:String(code || ""),
-    supplier:sup || String(rawSup || "ไม่ระบุ"),
-    date:dt,
+    id: String(id),
+    branch: String(branch || code || "-"),
+    code: String(code || ""),
+    supplier: sup || String(rawSup || "ไม่ระบุ"),
+    date: dt,
     age,
     sla,
     over,
     state,
-    
-serial:String(pick(o, [
-  "Serial Number", "Serial", "S/N", "IMEI"
-]) || ""),
 
-    product:String(pick(o, [
+    serial: String(pick(o, [
+      "Serial Number", "Serial", "S/N", "IMEI"
+    ]) || ""),
+
+    product: String(pick(o, [
       "Product Code", "รหัสสินค้า", "product_upc",
       "ProductStore::product_name"
     ]) || ""),
-    status:rawStatus
+
+    status: rawStatus
   };
 }
 
-function fmt(d) {
-  return d ? d.toLocaleDateString("th-TH") : "-";
-}
 
 function statusLabel(state) {
   return {
