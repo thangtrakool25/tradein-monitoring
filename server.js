@@ -110,6 +110,28 @@ function groupItems(items) {
   );
 }
 
+function saveNotificationHistory(record) {
+  let history = [];
+
+  if (fs.existsSync(HISTORY_FILE)) {
+    try {
+      history = JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8"));
+    } catch (e) {
+      history = [];
+    }
+  }
+
+  history.unshift(record);
+
+  // เก็บประวัติล่าสุด 200 ครั้ง
+  history = history.slice(0, 200);
+
+  fs.writeFileSync(
+    HISTORY_FILE,
+    JSON.stringify(history, null, 2)
+  );
+}
+
 async function pushLine(items, heading) {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   const to = process.env.LINE_TO_ID;
@@ -152,12 +174,18 @@ async function pushLine(items, heading) {
 
   const body = await response.text();
 
-  if (!response.ok) {
-    throw new Error(`LINE API ${response.status}: ${body}`);
-  }
-
-  return { sent: true, configured: true };
+ if (!response.ok) {
+  throw new Error(`LINE API ${response.status}: ${body}`);
 }
+
+saveNotificationHistory({
+  createdAt: new Date().toISOString(),
+  heading,
+  count: items.length,
+  details: lines
+});
+
+return {sent:true, configured:true};
 
 // ========================================
 // DATA
@@ -280,6 +308,48 @@ app.post("/api/line-alert", async (req, res) => {
   }
 });
 
+
+  app.get("/api/notifications", (req, res) => {
+  try {
+    if (!fs.existsSync(HISTORY_FILE)) {
+      return res.json([]);
+    }
+
+    const history = JSON.parse(
+      fs.readFileSync(HISTORY_FILE, "utf8")
+    );
+
+    res.json(history);
+  } catch (e) {
+    res.status(500).json({
+      error: "Cannot read notification history"
+    });
+  }
+});
+
+
+// ========================================
+// NOTIFICATION HISTORY API
+// ========================================
+
+app.get("/api/notifications", (req, res) => {
+  try {
+    if (!fs.existsSync(HISTORY_FILE)) {
+      return res.json([]);
+    }
+
+    const history = JSON.parse(
+      fs.readFileSync(HISTORY_FILE, "utf8")
+    );
+
+    res.json(history);
+  } catch (error) {
+    res.status(500).json({
+      error: "Cannot read notification history"
+    });
+  }
+});
+  
 // ========================================
 // DAILY SLA REMINDER: 08:00 Bangkok
 // ========================================
