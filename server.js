@@ -1,5 +1,6 @@
 
 require("dotenv").config();
+
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
@@ -8,7 +9,10 @@ const crypto = require("crypto");
 
 const app = express();
 
-// เก็บ Raw Body สำหรับตรวจสอบ LINE Webhook Signature
+// ========================================
+// CONFIG
+// ========================================
+
 app.use(express.json({
   limit: "25mb",
   verify: (req, res, buf) => {
@@ -19,6 +23,7 @@ app.use(express.json({
 app.use(express.static(path.join(__dirname, "public")));
 
 const DATA_FILE = path.join(__dirname, "tradein-data.json");
+const HISTORY_FILE = path.join(__dirname, "notification-history.json");
 
 const SLA = {
   KTS: 15,
@@ -57,11 +62,7 @@ app.post("/callback", (req, res) => {
 
   for (const event of events) {
     if (event.source && event.source.type === "group") {
-      const groupId = event.source.groupId;
-
-      console.log("==================================");
-      console.log("LINE GROUP ID:", groupId);
-      console.log("==================================");
+      console.log("LINE GROUP ID:", event.source.groupId);
     }
 
     if (event.source && event.source.type === "room") {
@@ -110,20 +111,24 @@ function groupItems(items) {
   );
 }
 
+// ========================================
+// NOTIFICATION HISTORY STORAGE
+// ========================================
+
 function saveNotificationHistory(record) {
   let history = [];
 
   if (fs.existsSync(HISTORY_FILE)) {
     try {
-      history = JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8"));
+      history = JSON.parse(
+        fs.readFileSync(HISTORY_FILE, "utf8")
+      );
     } catch (e) {
       history = [];
     }
   }
 
   history.unshift(record);
-
-  // เก็บประวัติล่าสุด 200 ครั้ง
   history = history.slice(0, 200);
 
   fs.writeFileSync(
@@ -132,16 +137,26 @@ function saveNotificationHistory(record) {
   );
 }
 
+// ========================================
+// SEND LINE MESSAGE
+// ========================================
+
 async function pushLine(items, heading) {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   const to = process.env.LINE_TO_ID;
 
   if (!token || !to) {
-    return { sent: false, configured: false };
+    return {
+      sent: false,
+      configured: false
+    };
   }
 
   if (!items.length) {
-    return { sent: false, configured: true };
+    return {
+      sent: false,
+      configured: true
+    };
   }
 
   const lines = groupItems(items);
@@ -174,18 +189,22 @@ async function pushLine(items, heading) {
 
   const body = await response.text();
 
- if (!response.ok) {
-  throw new Error(`LINE API ${response.status}: ${body}`);
+  if (!response.ok) {
+    throw new Error(`LINE API ${response.status}: ${body}`);
+  }
+
+  saveNotificationHistory({
+    createdAt: new Date().toISOString(),
+    heading,
+    count: items.length,
+    details: lines
+  });
+
+  return {
+    sent: true,
+    configured: true
+  };
 }
-
-saveNotificationHistory({
-  createdAt: new Date().toISOString(),
-  heading,
-  count: items.length,
-  details: lines
-});
-
-return {sent:true, configured:true};
 
 // ========================================
 // DATA
@@ -193,10 +212,15 @@ return {sent:true, configured:true};
 
 function readData() {
   if (!fs.existsSync(DATA_FILE)) {
-    return { items: [], importedAt: null };
+    return {
+      items: [],
+      importedAt: null
+    };
   }
 
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
+  return JSON.parse(
+    fs.readFileSync(DATA_FILE, "utf8")
+  );
 }
 
 function currentItems(data) {
@@ -238,7 +262,7 @@ function currentItems(data) {
 }
 
 // ========================================
-// API
+// API: GET DATA
 // ========================================
 
 app.get("/api/data", (req, res) => {
@@ -250,13 +274,19 @@ app.get("/api/data", (req, res) => {
   });
 });
 
+// ========================================
+// API: IMPORT EXCEL DATA
+// ========================================
+
 app.post("/api/import", async (req, res) => {
   const items = Array.isArray(req.body.items)
     ? req.body.items
     : [];
 
   if (!items.length) {
-    return res.status(400).json({ error: "No items" });
+    return res.status(400).json({
+      error: "No items"
+    });
   }
 
   const data = {
@@ -285,6 +315,7 @@ app.post("/api/import", async (req, res) => {
       lineConfigured: result.configured,
       alertCount: candidates.length
     });
+
   } catch (e) {
     res.status(502).json({
       saved: true,
@@ -295,41 +326,30 @@ app.post("/api/import", async (req, res) => {
   }
 });
 
+// ========================================
+// API: MANUAL LINE ALERT
+// ========================================
+
 app.post("/api/line-alert", async (req, res) => {
   try {
     const result = await pushLine(
-      Array.isArray(req.body.items) ? req.body.items : [],
+      Array.isArray(req.body.items)
+        ? req.body.items
+        : [],
       "🚨 TRADE-IN SLA ALERT"
     );
 
     res.json(result);
+
   } catch (e) {
-    res.status(502).json({ error: e.message });
-  }
-});
-
-
-  app.get("/api/notifications", (req, res) => {
-  try {
-    if (!fs.existsSync(HISTORY_FILE)) {
-      return res.json([]);
-    }
-
-    const history = JSON.parse(
-      fs.readFileSync(HISTORY_FILE, "utf8")
-    );
-
-    res.json(history);
-  } catch (e) {
-    res.status(500).json({
-      error: "Cannot read notification history"
+    res.status(502).json({
+      error: e.message
     });
   }
 });
 
-
 // ========================================
-// NOTIFICATION HISTORY API
+// API: NOTIFICATION HISTORY
 // ========================================
 
 app.get("/api/notifications", (req, res) => {
@@ -343,13 +363,14 @@ app.get("/api/notifications", (req, res) => {
     );
 
     res.json(history);
-  } catch (error) {
+
+  } catch (e) {
     res.status(500).json({
       error: "Cannot read notification history"
     });
   }
 });
-  
+
 // ========================================
 // DAILY SLA REMINDER: 08:00 Bangkok
 // ========================================
@@ -370,6 +391,7 @@ cron.schedule(
           "📊 TRADE-IN DAILY SLA REMINDER"
         );
       }
+
     } catch (e) {
       console.error(
         "Daily Trade-In alert failed:",
@@ -377,7 +399,9 @@ cron.schedule(
       );
     }
   },
-  { timezone: "Asia/Bangkok" }
+  {
+    timezone: "Asia/Bangkok"
+  }
 );
 
 // ========================================
