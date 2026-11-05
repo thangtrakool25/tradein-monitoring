@@ -527,6 +527,25 @@ let rows = [];
 
 const $ = id => document.getElementById(id);
 
+
+// จัดรูปแบบวันที่และข้อมูล
+function fmt(value) {
+  if (value === null || value === undefined || value === "") {
+    return "-";
+  }
+
+  if (value instanceof Date && !isNaN(value)) {
+    return value.toLocaleDateString("th-TH", {
+      day:"2-digit",
+      month:"2-digit",
+      year:"numeric"
+    });
+  }
+
+  return String(value).trim();
+}
+
+
 // เปลี่ยนหน้าเมนู
 function showPage(pageId) {
   document.querySelectorAll(".page").forEach(page => {
@@ -553,6 +572,7 @@ document.querySelectorAll(".nav[data-target]").forEach(button => {
   });
 });
 
+
 function norm(v) {
   return String(v ?? "")
     .trim()
@@ -561,11 +581,9 @@ function norm(v) {
 }
 
 
-
 function pick(obj, keys) {
   if (!obj || typeof obj !== "object") return "";
 
-  // ทำชื่อหัวตารางให้เป็นรูปแบบเดียวกันก่อนเปรียบเทียบ
   function cleanKey(value) {
     return String(value ?? "")
       .toLowerCase()
@@ -595,7 +613,6 @@ function pick(obj, keys) {
 }
 
 
-
 function supplier(v) {
   const s = String(v || "").toUpperCase().replace(/[^A-Z]/g, "");
 
@@ -605,6 +622,7 @@ function supplier(v) {
 
   return "";
 }
+
 
 function parseDate(v) {
   if (v instanceof Date && !isNaN(v)) return v;
@@ -630,13 +648,25 @@ function parseDate(v) {
 
     if (y > 2400) y -= 543;
 
-    // ค่าเริ่มต้นเป็น DD/MM/YYYY
-    return new Date(y, mo - 1, d);
+    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
+
+    const result = new Date(y, mo - 1, d);
+
+    if (
+      result.getFullYear() !== y ||
+      result.getMonth() !== mo - 1 ||
+      result.getDate() !== d
+    ) {
+      return null;
+    }
+
+    return result;
   }
 
   const dt = new Date(s);
   return isNaN(dt) ? null : dt;
 }
+
 
 function dayDiff(a, b) {
   return Math.floor(
@@ -644,7 +674,6 @@ function dayDiff(a, b) {
      Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 86400000
   );
 }
-
 
 
 function normalizeRecord(o, i) {
@@ -671,7 +700,6 @@ function normalizeRecord(o, i) {
     /ส่งคืนแล้ว|คืนแล้ว|completed|returned|closed|complete/i.test(rawStatus) ||
     !!pick(o, ["Return Date", "วันที่ส่งคืน"]);
 
-  // Trade-In No. รองรับชื่อคอลัมน์หลายรูปแบบ
   const id = pick(o, [
     "Trade-In No.",
     "Trade In No.",
@@ -684,6 +712,7 @@ function normalizeRecord(o, i) {
     "tradein_no",
     "trade_in_no",
     "tradein_number",
+    "noINV",
     "product_sn",
     "product sn",
     "Product SN",
@@ -732,26 +761,26 @@ function normalizeRecord(o, i) {
           : "normal";
 
   return {
-    id: String(id),
-    branch: String(branch || code || "-"),
-    code: String(code || ""),
-    supplier: sup || String(rawSup || "ไม่ระบุ"),
-    date: dt,
+    id:String(id),
+    branch:String(branch || code || "-"),
+    code:String(code || ""),
+    supplier:sup || String(rawSup || "ไม่ระบุ"),
+    date:dt,
     age,
     sla,
     over,
     state,
 
-    serial: String(pick(o, [
+    serial:String(pick(o, [
       "Serial Number", "Serial", "S/N", "IMEI"
     ]) || ""),
 
-    product: String(pick(o, [
+    product:String(pick(o, [
       "Product Code", "รหัสสินค้า", "product_upc",
       "ProductStore::product_name"
     ]) || ""),
 
-    status: rawStatus
+    status:rawStatus
   };
 }
 
@@ -766,6 +795,7 @@ function statusLabel(state) {
   }[state] || "ตรวจสอบข้อมูล";
 }
 
+
 function esc(s) {
   return String(s ?? "").replace(/[&<>"']/g, c => ({
     "&":"&amp;",
@@ -775,6 +805,7 @@ function esc(s) {
     "'":"&#39;"
   }[c]));
 }
+
 
 function render() {
   const active = rows.filter(x => x.state !== "returned");
@@ -839,6 +870,7 @@ function render() {
     : `<tr><td colspan="8" class="empty">ไม่พบรายการ</td></tr>`;
 }
 
+
 // นำเข้า Excel
 async function importFile(file) {
   if (!file) return;
@@ -847,12 +879,17 @@ async function importFile(file) {
     `<div class="note">กำลังประมวลผลไฟล์ กรุณารอสักครู่...</div>`;
 
   try {
+    if (!window.XLSX) {
+      throw new Error("ไม่สามารถโหลดระบบอ่าน Excel ได้ กรุณาตรวจสอบอินเทอร์เน็ต");
+    }
+
     const wb = XLSX.read(await file.arrayBuffer(), {
       type:"array",
       cellDates:true
     });
 
     const sheet = wb.Sheets[wb.SheetNames[0]];
+
     let data = XLSX.utils.sheet_to_json(sheet, { defval:"" });
 
     if (!data.length) {
@@ -938,11 +975,13 @@ async function importFile(file) {
   }
 }
 
+
 // เลือกไฟล์
 $("file").addEventListener("change", async e => {
   await importFile(e.target.files[0]);
   e.target.value = "";
 });
+
 
 // ลากไฟล์วาง
 const dropZone = $("dropZone");
@@ -964,10 +1003,12 @@ dropZone.addEventListener("drop", async e => {
   if (file) await importFile(file);
 });
 
+
 // Filters
 ["supplierFilter","statusFilter","search"].forEach(id => {
   $(id).addEventListener("input", render);
 });
+
 
 // Export Excel
 $("exportBtn").onclick = () => {
@@ -996,6 +1037,7 @@ $("exportBtn").onclick = () => {
   XLSX.utils.book_append_sheet(wb, ws, "Trade-In");
   XLSX.writeFile(wb, "TradeIn_Monitoring_Report.xlsx");
 };
+
 
 // โหลดประวัติการแจ้งเตือนจาก Server
 async function loadHistory() {
@@ -1030,6 +1072,7 @@ async function loadHistory() {
     `;
   }
 }
+
 
 // โหลดข้อมูลจาก Browser และ Server
 async function loadData() {
@@ -1070,6 +1113,7 @@ async function loadData() {
 }
 
 loadData();
+
 </script>
 </body>
 </html>
