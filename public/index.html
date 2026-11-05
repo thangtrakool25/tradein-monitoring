@@ -645,7 +645,8 @@ function normalizeRecord(o, i) {
     /ส่งคืนแล้ว|คืนแล้ว|completed|returned|closed|complete/i.test(rawStatus) ||
     !!pick(o, ["Return Date", "วันที่ส่งคืน"]);
 
-  const id = pick(o, [
+ const id = pick(o, [
+    "product_sn", "Product SN", "PRODUCT_SN",
     "Trade-In No.", "Trade-In No", "เลขที่ Trade-In",
     "เลขที่รายการ", "Document No", "noINV"
   ]) || `ROW-${i + 1}`;
