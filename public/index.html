@@ -820,7 +820,7 @@ function render() {
   $("records").innerHTML = shown.length
     ? shown.map(x => `
       <tr>
-        <td>${esc(x.id)}</td>
+        <td>${esc(x.id || "-")}</td>
         <td>${esc(x.branch)} ${x.code ? `<span class="note">(${esc(x.code)})</span>` : ""}</td>
         <td>${esc(x.supplier)}</td>
         <td>${fmt(x.date)}</td>
