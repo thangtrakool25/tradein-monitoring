@@ -108,6 +108,19 @@ footer { color:var(--muted); font-size:11px; margin:18px 2px; }
   .top { align-items:flex-start; flex-direction:column; }
 }
 </style>
+  button.nav {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+}
+
+button.nav:hover {
+  background: #2d4167;
+  color: white;
+}
 </head>
 
 <body>
@@ -125,7 +138,7 @@ footer { color:var(--muted); font-size:11px; margin:18px 2px; }
   </div>
 </aside>
 
-<main>
+<main id="dashboard">
 <div class="top">
   <div>
     <h1>Trade-In Monitoring</h1>
@@ -178,7 +191,7 @@ footer { color:var(--muted); font-size:11px; margin:18px 2px; }
   </div>
 </section>
 
-<section class="panel">
+<section class="panel" id="importPanel">
   <h2>นำเข้าข้อมูล Excel</h2>
   <div class="upload" id="dropZone">
     <strong>ลากไฟล์ Excel มาวาง หรือเลือกไฟล์</strong>
@@ -194,7 +207,7 @@ footer { color:var(--muted); font-size:11px; margin:18px 2px; }
 </section>
 </div>
 
-<section class="panel">
+<section class="panel" id="recordsPanel">
   <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
     <h2>รายการ Trade-In คงค้าง</h2>
     <div class="filters">
@@ -230,6 +243,30 @@ footer { color:var(--muted); font-size:11px; margin:18px 2px; }
   </div>
 </section>
 
+ <section class="panel" id="historyPanel" style="display:none">
+  <h2>ประวัติการแจ้งเตือน LINE</h2>
+  <div class="toolbar">
+    <button class="btn secondary" onclick="loadHistory()">
+      ↻ รีเฟรชประวัติ
+    </button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>วันและเวลา</th>
+          <th>หัวข้อ</th>
+          <th>จำนวนรายการ</th>
+          <th>รายละเอียด</th>
+        </tr>
+      </thead>
+      <tbody id="historyRows">
+        <tr><td colspan="4" class="empty">กำลังโหลดประวัติ...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section> 
+  
 <footer>Trade-In Monitoring · คัดเฉพาะรายการ Trade-In KTS / ADD / COMPAsia</footer>
 </main>
 </div>
@@ -615,6 +652,60 @@ $("exportBtn").onclick = () => {
   XLSX.writeFile(wb, "TradeIn_Monitoring_Report.xlsx");
 };
 
+  // ระบบเปลี่ยนเมนู
+document.querySelectorAll(".nav[data-target]").forEach(button => {
+  button.addEventListener("click", () => {
+    const target = button.dataset.target;
+
+    document.querySelectorAll(".nav").forEach(nav => {
+      nav.classList.remove("active");
+    });
+
+    button.classList.add("active");
+
+    $("historyPanel").style.display =
+      target === "historyPanel" ? "block" : "none";
+
+    if (target === "historyPanel") {
+      loadHistory();
+    }
+
+    const element = $(target);
+    if (element) {
+      element.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+    }
+  });
+});
+
+// โหลดประวัติการแจ้งเตือนจาก Server
+async function loadHistory() {
+  const tbody = $("historyRows");
+
+  try {
+    const response = await fetch("/api/notifications");
+    if (!response.ok) throw new Error("โหลดประวัติไม่สำเร็จ");
+
+    const data = await response.json();
+
+    tbody.innerHTML = data.length
+      ? data.map(x => `
+        <tr>
+          <td>${esc(new Date(x.createdAt).toLocaleString("th-TH"))}</td>
+          <td>${esc(x.heading)}</td>
+          <td>${esc(x.count)} รายการ</td>
+          <td>${esc((x.details || []).join(" / "))}</td>
+        </tr>
+      `).join("")
+      : '<tr><td colspan="4" class="empty">ยังไม่มีประวัติการแจ้งเตือน</td></tr>';
+
+  } catch (error) {
+    tbody.innerHTML =
+      `<tr><td colspan="4" class="empty">${esc(error.message)}</td></tr>`;
+  }
+}
 // โหลดข้อมูลจาก Browser และ Server
 async function loadData() {
   try {
@@ -652,6 +743,7 @@ async function loadData() {
   }
 }
 
+  
 loadData();
 </script>
 </body>
