@@ -1,62 +1,658 @@
-<!doctype html>
+
+<!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trade-In Monitoring</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
-:root{--bg:#f4f6fa;--card:#fff;--ink:#172033;--muted:#718096;--line:#e6eaf0;--blue:#3157d5;--red:#d9364f;--amber:#bd7900;--green:#16865b}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,"Noto Sans Thai",system-ui,sans-serif}
-.app{display:grid;grid-template-columns:235px 1fr;min-height:100vh}.side{background:#17233d;color:white;padding:25px 17px}.brand{font-weight:800;font-size:18px;margin:5px 8px 30px}.brand small{display:block;color:#aebbd2;font-size:11px;font-weight:500;letter-spacing:1.4px}.nav{padding:11px 13px;border-radius:10px;color:#d4dced;margin:5px 0}.nav.active{background:#2d4167;color:white}.side .hint{margin:35px 8px;color:#aebbd2;font-size:12px}
-main{padding:28px;max-width:1500px;width:100%;margin:auto}.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:23px}.top h1{font-size:25px;margin:0}.sub{color:var(--muted);margin-top:4px}.btn{border:0;border-radius:9px;padding:10px 15px;background:var(--blue);color:white;font-weight:650;cursor:pointer}.btn.secondary{background:white;color:var(--ink);border:1px solid var(--line)}.btn:disabled{opacity:.45;cursor:not-allowed}
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}.card,.panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:17px;box-shadow:0 2px 8px #17233d08}.metric-label{color:var(--muted);font-size:12px}.metric{font-size:30px;font-weight:800;margin:5px 0}.metric.red{color:var(--red)}.metric.green{color:var(--green)}.metric.amber{color:var(--amber)}
-.layout{display:grid;grid-template-columns:1.25fr .75fr;gap:15px;margin-bottom:15px}.panel h2{font-size:16px;margin:0 0 14px}.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:13px}.toolbar input,.toolbar select,input,select{border:1px solid var(--line);border-radius:8px;padding:9px;background:white;color:var(--ink)}.toolbar input[type=search]{min-width:210px}
-table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);white-space:nowrap}th{color:var(--muted);font-size:11px;font-weight:700;background:#fafbfe}td.wrap{white-space:normal}.table-wrap{overflow:auto}.pill{padding:4px 8px;border-radius:30px;font-size:11px;font-weight:700;display:inline-block}.ok{background:#e6f6ee;color:var(--green)}.warn{background:#fff4dd;color:var(--amber)}.late{background:#ffeaed;color:var(--red)}.empty{padding:28px;text-align:center;color:var(--muted)}
-.upload{border:1.5px dashed #b9c5da;background:#f9fbff;border-radius:12px;padding:18px;text-align:center}.upload strong{display:block;margin-bottom:5px}.note{font-size:12px;color:var(--muted)}.alertbox{padding:12px;border-radius:10px;background:#fff2f3;color:#a92339;margin-top:12px;font-size:13px}.successbox{padding:12px;border-radius:10px;background:#eaf8f0;color:#176c4b;margin-top:12px;font-size:13px}
-.filters{display:flex;gap:8px;flex-wrap:wrap}.filters select{min-width:145px}
-footer{color:var(--muted);font-size:11px;margin:18px 2px}
-@media(max-width:950px){.app{grid-template-columns:1fr}.side{display:none}main{padding:17px}.cards{grid-template-columns:repeat(2,1fr)}.layout{grid-template-columns:1fr}.top{align-items:flex-start;flex-direction:column}}
-</style></head>
-<body><div class="app">
-<aside class="side"><div class="brand">TRADE-IN<small>MONITORING SYSTEM</small></div><div class="nav active">▦ ภาพรวม Dashboard</div><div class="nav">▤ รายการ Trade-In</div><div class="nav">⇧ นำเข้าข้อมูล Excel</div><div class="nav">◷ ประวัติการแจ้งเตือน</div><div class="hint">ติดตาม SLA แยกตาม Supplier<br>KTS 15 วัน · ADD 15 วัน<br>COMPAsia 10 วัน</div></aside>
+:root {
+  --bg:#f4f6fa; --card:#fff; --ink:#172033; --muted:#718096;
+  --line:#e6eaf0; --blue:#3157d5; --red:#d9364f;
+  --amber:#bd7900; --green:#16865b;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0; background:var(--bg); color:var(--ink);
+  font:14px/1.6 Inter,"Noto Sans Thai",system-ui,sans-serif;
+}
+.app { display:grid; grid-template-columns:235px 1fr; min-height:100vh; }
+.side { background:#17233d; color:white; padding:25px 17px; }
+.brand { font-weight:800; font-size:18px; margin:5px 8px 30px; }
+.brand small {
+  display:block; color:#aebbd2; font-size:11px;
+  font-weight:500; letter-spacing:1.4px;
+}
+.nav { padding:11px 13px; border-radius:10px; color:#d4dced; margin:5px 0; }
+.nav.active { background:#2d4167; color:white; }
+.side .hint { margin:35px 8px; color:#aebbd2; font-size:12px; }
+main { padding:28px; max-width:1500px; width:100%; margin:auto; }
+.top {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:15px; margin-bottom:23px;
+}
+.top h1 { font-size:25px; margin:0; }
+.sub { color:var(--muted); margin-top:4px; }
+.btn {
+  border:0; border-radius:9px; padding:10px 15px;
+  background:var(--blue); color:white; font-weight:650; cursor:pointer;
+}
+.btn.secondary { background:white; color:var(--ink); border:1px solid var(--line); }
+.btn:disabled { opacity:.45; cursor:not-allowed; }
+.cards {
+  display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:14px; margin:18px 0;
+}
+.card,.panel {
+  background:var(--card); border:1px solid var(--line);
+  border-radius:14px; padding:17px; box-shadow:0 2px 8px #17233d08;
+}
+.metric-label { color:var(--muted); font-size:12px; }
+.metric { font-size:30px; font-weight:800; margin:5px 0; }
+.metric.red { color:var(--red); }
+.metric.green { color:var(--green); }
+.metric.amber { color:var(--amber); }
+.layout {
+  display:grid; grid-template-columns:1.25fr .75fr;
+  gap:15px; margin-bottom:15px;
+}
+.panel h2 { font-size:16px; margin:0 0 14px; }
+.toolbar {
+  display:flex; gap:9px; flex-wrap:wrap;
+  align-items:center; margin-bottom:13px;
+}
+.toolbar input,.toolbar select,input,select {
+  border:1px solid var(--line); border-radius:8px;
+  padding:9px; background:white; color:var(--ink);
+}
+.toolbar input[type=search] { min-width:210px; }
+table { width:100%; border-collapse:collapse; font-size:13px; }
+th,td {
+  text-align:left; padding:11px 9px;
+  border-bottom:1px solid var(--line); white-space:nowrap;
+}
+th { color:var(--muted); font-size:11px; font-weight:700; background:#fafbfe; }
+.table-wrap { overflow:auto; }
+.pill {
+  padding:4px 8px; border-radius:30px; font-size:11px;
+  font-weight:700; display:inline-block;
+}
+.ok { background:#e6f6ee; color:var(--green); }
+.warn { background:#fff4dd; color:var(--amber); }
+.late { background:#ffeaed; color:var(--red); }
+.empty { padding:28px; text-align:center; color:var(--muted); }
+.upload {
+  border:1.5px dashed #b9c5da; background:#f9fbff;
+  border-radius:12px; padding:18px; text-align:center;
+}
+.upload strong { display:block; margin-bottom:5px; }
+.note { font-size:12px; color:var(--muted); }
+.alertbox {
+  padding:12px; border-radius:10px; background:#fff2f3;
+  color:#a92339; margin-top:12px; font-size:13px;
+}
+.successbox {
+  padding:12px; border-radius:10px; background:#eaf8f0;
+  color:#176c4b; margin-top:12px; font-size:13px;
+}
+.filters { display:flex; gap:8px; flex-wrap:wrap; }
+.filters select { min-width:145px; }
+footer { color:var(--muted); font-size:11px; margin:18px 2px; }
+@media(max-width:950px) {
+  .app { grid-template-columns:1fr; }
+  .side { display:none; }
+  main { padding:17px; }
+  .cards { grid-template-columns:repeat(2,1fr); }
+  .layout { grid-template-columns:1fr; }
+  .top { align-items:flex-start; flex-direction:column; }
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+<aside class="side">
+  <div class="brand">TRADE-IN<small>MONITORING SYSTEM</small></div>
+  <div class="nav active">▦ ภาพรวม Dashboard</div>
+  <div class="nav">▤ รายการ Trade-In</div>
+  <div class="nav">⇧ นำเข้าข้อมูล Excel</div>
+  <div class="nav">◷ ประวัติการแจ้งเตือน</div>
+  <div class="hint">
+    ติดตาม SLA แยกตาม Supplier<br>
+    KTS 15 วัน · ADD 15 วัน<br>
+    COMPAsia 10 วัน
+  </div>
+</aside>
+
 <main>
-<div class="top"><div><h1>Trade-In Monitoring</h1><div class="sub">ติดตามสินค้าคงค้างและ SLA การส่งคืน Supplier</div></div><div class="toolbar"><button class="btn secondary" id="exportBtn">ส่งออก Excel</button><button class="btn" onclick="document.getElementById('file').click()">＋ นำเข้า Excel</button></div></div>
+<div class="top">
+  <div>
+    <h1>Trade-In Monitoring</h1>
+    <div class="sub">ติดตามสินค้าคงค้างและ SLA การส่งคืน Supplier</div>
+  </div>
+  <div class="toolbar">
+    <button class="btn secondary" id="exportBtn">ส่งออก Excel</button>
+    <button class="btn" onclick="document.getElementById('file').click()">＋ นำเข้า Excel</button>
+  </div>
+</div>
+
 <div class="cards">
-<div class="card"><div class="metric-label">สินค้าคงค้างทั้งหมด</div><div class="metric" id="total">0</div><div class="note">รายการที่ยังไม่ส่งคืน</div></div>
-<div class="card"><div class="metric-label">ยังไม่เกิน SLA</div><div class="metric green" id="normal">0</div><div class="note">รวมรายการใกล้ครบกำหนด</div></div>
-<div class="card"><div class="metric-label">ใกล้ครบกำหนด (ภายใน 3 วัน)</div><div class="metric amber" id="near">0</div><div class="note">เตรียมติดตามสาขา</div></div>
-<div class="card"><div class="metric-label">เกินกำหนด SLA</div><div class="metric red" id="overdue">0</div><div class="note">ต้องติดตามทันที</div></div>
+  <div class="card">
+    <div class="metric-label">สินค้าคงค้างทั้งหมด</div>
+    <div class="metric" id="total">0</div>
+    <div class="note">รายการที่ยังไม่ส่งคืน</div>
+  </div>
+  <div class="card">
+    <div class="metric-label">ยังไม่เกิน SLA</div>
+    <div class="metric green" id="normal">0</div>
+    <div class="note">รวมรายการปกติและใกล้ครบกำหนด</div>
+  </div>
+  <div class="card">
+    <div class="metric-label">ใกล้ครบกำหนด (ภายใน 3 วัน)</div>
+    <div class="metric amber" id="near">0</div>
+    <div class="note">เตรียมติดตามสาขา</div>
+  </div>
+  <div class="card">
+    <div class="metric-label">เกินกำหนด SLA</div>
+    <div class="metric red" id="overdue">0</div>
+    <div class="note">ต้องติดตามทันที</div>
+  </div>
 </div>
+
 <div class="layout">
-<section class="panel"><h2>สรุปตาม Supplier</h2><div class="table-wrap"><table><thead><tr><th>Supplier</th><th>SLA</th><th>คงค้าง</th><th>ใกล้ครบกำหนด</th><th>เกิน SLA</th></tr></thead><tbody id="supplierRows"><tr><td colspan="5" class="empty">นำเข้าไฟล์ Excel เพื่อเริ่มต้น</td></tr></tbody></table></div></section>
-<section class="panel"><h2>นำเข้าข้อมูล Excel</h2><div class="upload"><strong>ลากไฟล์ Excel มาวาง หรือเลือกไฟล์</strong><span class="note">รองรับ .xlsx และ .xls · รองรับไฟล์ต้นทางขนาดใหญ่ · คัดเฉพาะ Trade-In</span><br><br><button class="btn secondary" onclick="document.getElementById('file').click()">เลือกไฟล์</button><input id="file" type="file" accept=".xlsx,.xls,.csv" hidden></div><div class="note" style="margin-top:12px">รองรับคอลัมน์ supplier_name, noINV, product_sn, age_inBranch, date_stock และชื่อสาขาจากไฟล์ที่ส่งมา</div><div id="importMsg"></div></section>
-</div>
 <section class="panel">
-<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center"><h2>รายการ Trade-In คงค้าง</h2><div class="filters"><select id="supplierFilter"><option value="">ทุก Supplier</option><option>KTS</option><option>ADD</option><option>COMPAsia</option></select><select id="statusFilter"><option value="">ทุกสถานะ SLA</option><option value="normal">ปกติ</option><option value="near">ใกล้ครบกำหนด</option><option value="late">เกิน SLA</option></select><input id="search" type="search" placeholder="ค้นหาสาขา / เลขที่ / Serial"></div></div>
-<div class="table-wrap"><table><thead><tr><th>Trade-In No.</th><th>สาขา</th><th>Supplier</th><th>Trade-In Date</th><th>อายุ (วัน)</th><th>SLA</th><th>เกิน (วัน)</th><th>สถานะ</th></tr></thead><tbody id="records"><tr><td colspan="8" class="empty">ยังไม่มีข้อมูล กรุณานำเข้า Excel</td></tr></tbody></table></div>
+  <h2>สรุปตาม Supplier</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Supplier</th><th>SLA</th><th>คงค้าง</th>
+          <th>ใกล้ครบกำหนด</th><th>เกิน SLA</th>
+        </tr>
+      </thead>
+      <tbody id="supplierRows">
+        <tr><td colspan="5" class="empty">นำเข้าไฟล์ Excel เพื่อเริ่มต้น</td></tr>
+      </tbody>
+    </table>
+  </div>
 </section>
-<footer>Trade-In Monitoring · เวอร์ชันเริ่มต้น · คัดเฉพาะรายการ Trade-In KTS / ADD / COMPAsia จากไฟล์ต้นทาง</footer>
-</main></div>
+
+<section class="panel">
+  <h2>นำเข้าข้อมูล Excel</h2>
+  <div class="upload" id="dropZone">
+    <strong>ลากไฟล์ Excel มาวาง หรือเลือกไฟล์</strong>
+    <span class="note">รองรับ .xlsx, .xls และ .csv</span><br><br>
+    <button class="btn secondary" onclick="document.getElementById('file').click()">เลือกไฟล์</button>
+    <input id="file" type="file" accept=".xlsx,.xls,.csv" hidden>
+  </div>
+  <div class="note" style="margin-top:12px">
+    รองรับ Supplier, noINV, product_sn, age_inBranch,
+    date_stock และชื่อสาขาจากไฟล์ต้นทาง
+  </div>
+  <div id="importMsg"></div>
+</section>
+</div>
+
+<section class="panel">
+  <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
+    <h2>รายการ Trade-In คงค้าง</h2>
+    <div class="filters">
+      <select id="supplierFilter">
+        <option value="">ทุก Supplier</option>
+        <option value="KTS">KTS</option>
+        <option value="ADD">ADD</option>
+        <option value="COMPAsia">COMPAsia</option>
+      </select>
+      <select id="statusFilter">
+        <option value="">ทุกสถานะ SLA</option>
+        <option value="normal">ปกติ</option>
+        <option value="near">ใกล้ครบกำหนด</option>
+        <option value="late">เกิน SLA</option>
+        <option value="unknown">ตรวจสอบข้อมูล</option>
+      </select>
+      <input id="search" type="search" placeholder="ค้นหาสาขา / เลขที่ / Serial">
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Trade-In No.</th><th>สาขา</th><th>Supplier</th>
+          <th>Trade-In Date</th><th>อายุ (วัน)</th>
+          <th>SLA</th><th>เกิน (วัน)</th><th>สถานะ</th>
+        </tr>
+      </thead>
+      <tbody id="records">
+        <tr><td colspan="8" class="empty">ยังไม่มีข้อมูล กรุณานำเข้า Excel</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<footer>Trade-In Monitoring · คัดเฉพาะรายการ Trade-In KTS / ADD / COMPAsia</footer>
+</main>
+</div>
+
 <script>
-const SLA={KTS:15,ADD:15,COMPASIA:10};
-let rows=[];
-const $=id=>document.getElementById(id);
-function norm(v){return String(v??'').trim().toLowerCase().replace(/[\\s_\\-().]/g,'')}
-function pick(obj,keys){for(const k of keys){const hit=Object.keys(obj).find(x=>norm(x)===norm(k));if(hit!==undefined&&obj[hit]!==''&&obj[hit]!=null)return obj[hit]}return ''}
-function supplier(v){let s=String(v||'').toUpperCase().replace(/[^A-Z]/g,'');if(s.includes('KTS'))return'KTS';if(s==='ADD'||s.includes('ADD'))return'ADD';if(s.includes('COMP')||s.includes('ASIA'))return'COMPAsia';return String(v||'ไม่ระบุ')}
-function parseDate(v){if(v instanceof Date)return v;if(typeof v==='number'&&window.XLSX)return XLSX.SSF.parse_date_code(v)?new Date(Date.UTC(1899,11,30)+v*86400000):null;let s=String(v||'').trim();if(!s)return null;let m=s.match(/^(\\d{1,2})[\\/.-](\\d{1,2})[\\/.-](\\d{4})$/);if(m){let y=+m[3];if(y>2400)y-=543;return new Date(y,+m[2]-1,+m[1])}let d=new Date(s);if(!isNaN(d))return d;return null}
-function dayDiff(a,b){return Math.floor((Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000)}
-function normalizeRecord(o,i){let rawSup=pick(o,['Supplier','ซัพพลายเออร์','Vendor','supplier_name']);let sup=supplier(rawSup);let dt=parseDate(pick(o,['Trade-In Date','Trade In Date','วันที่ Trade-In','วันที่รับ Trade-In','วันที่เริ่มต้น','date_poRecieve_cal']));let status=String(pick(o,['Status','สถานะ','สถานะรายการ','status'])||'คงค้าง').trim().toLowerCase();let returned=/ส่งคืนแล้ว|คืนแล้ว|completed|returned|closed|complete/.test(status)||!!pick(o,['Return Date','วันที่ส่งคืน']);let id=pick(o,['Trade-In No.','Trade-In No','เลขที่ Trade-In','เลขที่รายการ','Document No','noINV'])||`ROW-${i+1}`;let branch=pick(o,['Branch Name','สาขา','ชื่อสาขา','Branch','StockBranch::branch_name']);let code=pick(o,['Branch Code','รหัสสาขา','StockBranch::branch_code']);let sla=SLA[sup.toUpperCase()]||null;let rawAge=pick(o,['Age (Days)','age_inBranch','อายุสินค้า','อายุ (วัน)']);let age=rawAge!==''&&rawAge!=null&&Number.isFinite(Number(rawAge))?Number(rawAge):dt?dayDiff(dt,new Date()):null;let snap=parseDate(pick(o,['date_stock','Snapshot Date']));if(snap&&age!=null){age+=Math.max(0,dayDiff(snap,new Date()));}let over=age!=null&&sla!=null?Math.max(0,age-sla):null;let state=returned?'returned':age==null||sla==null?'unknown':age>sla?'late':age>=sla-3?'near':'normal';return{ id:String(id),branch:String(branch||code||'-'),code:String(code||''),supplier:sup,date:dt,age,sla,over,state,serial:String(pick(o,['Serial Number','Serial','S/N','IMEI','product_sn'])||''),product:String(pick(o,['Product Code','รหัสสินค้า','product_upc','ProductStore::product_name'])||''),status:String(pick(o,['Status','สถานะ','status'])||'คงค้าง')}}
-function fmt(d){return d?d.toLocaleDateString('th-TH'):'-'}
-function render(){let active=rows.filter(x=>x.state!=='returned');$('total').textContent=active.length;$('normal').textContent=active.filter(x=>['normal','near'].includes(x.state)).length;$('near').textContent=active.filter(x=>x.state==='near').length;$('overdue').textContent=active.filter(x=>x.state==='late').length;
-$('supplierRows').innerHTML=['KTS','ADD','COMPAsia'].map(s=>{let a=active.filter(x=>x.supplier===s);return `<tr><td><b>${s}</b></td><td>${SLA[s.toUpperCase()]} วัน</td><td>${a.length}</td><td>${a.filter(x=>x.state==='near').length}</td><td><b style="color:var(--red)">${a.filter(x=>x.state==='late').length}</b></td></tr>`}).join('');
-let sf=$('supplierFilter').value,st=$('statusFilter').value,q=$('search').value.toLowerCase();let shown=active.filter(x=>(!sf||x.supplier===sf)&&(!st||x.state===st)&&(!q||[x.id,x.branch,x.code,x.serial,x.product].join(' ').toLowerCase().includes(q))).sort((a,b)=>(b.over??-1)-(a.over??-1));
-$('records').innerHTML=shown.length?shown.map(x=>`<tr><td>${esc(x.id)}</td><td>${esc(x.branch)} ${x.code?`<span class="note">(${esc(x.code)})</span>`:''}</td><td>${esc(x.supplier)}</td><td>${fmt(x.date)}</td><td>${x.age??'-'}</td><td>${x.sla??'-'}</td><td>${x.over??'-'}</td><td><span class="pill ${x.state==='late'?'late':x.state==='near'?'warn':x.state==='normal'?'ok':''}">${x.state==='late'?'เกิน SLA':x.state==='near'?'ใกล้ครบกำหนด':x.state==='normal'?'ปกติ':'ตรวจสอบข้อมูล'}</span></td></tr>`).join(''):'<tr><td colspan="8" class="empty">ไม่พบรายการ</td></tr>'}
-function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-$('file').addEventListener('change',async e=>{let f=e.target.files[0];if(!f)return;try{let wb=XLSX.read(await f.arrayBuffer(),{type:'array',cellDates:true});let sheet=wb.Sheets[wb.SheetNames[0]];let data=XLSX.utils.sheet_to_json(sheet,{defval:''});if(!data.length)throw Error('ไม่พบข้อมูลในชีตแรก');let actual=data.filter(o=>{let v=String(pick(o,['supplier_name','Supplier','Vendor'])||'').toLowerCase();return v.includes('trade in')&&(v.includes('kts')||v.includes('add')||v.includes('compasia'))});if(actual.length)data=actual;rows=data.map(normalizeRecord);localStorage.setItem('tradein_rows',JSON.stringify(rows));render();let missing=rows.filter(x=>!x.date||!x.sla).length;
-try{const saved=await fetch('/api/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:rows})});if(saved.ok){const j=await saved.json();if(j.alertsSent)$('importMsg').innerHTML+=`<div class="successbox">ส่งแจ้งเตือน LINE ${j.alertCount} รายการแล้ว</div>`;else if(j.lineConfigured===false)$('importMsg').innerHTML+=`<div class="note">ยังไม่ได้ตั้งค่า LINE Messaging API · ข้อมูลบันทึกบนเซิร์ฟเวอร์แล้ว</div>`;}}catch(e){$('importMsg').innerHTML+=`<div class="note">บันทึกในเบราว์เซอร์แล้ว แต่ยังเชื่อมต่อเซิร์ฟเวอร์ไม่ได้</div>`;}$('importMsg').innerHTML=`<div class="${missing?'alertbox':'successbox'}">นำเข้าสำเร็จ ${rows.length} รายการ${missing?` · ${missing} รายการต้องตรวจสอบวันที่หรือชื่อ Supplier`:''}</div>`;await sendAlerts()}catch(err){$('importMsg').innerHTML=`<div class="alertbox">นำเข้าไม่สำเร็จ: ${esc(err.message)}</div>`}e.target.value=''});
-async function sendAlerts(){}
-['supplierFilter','statusFilter','search'].forEach(id=>$(id).addEventListener('input',render));
-$('exportBtn').onclick=()=>{if(!rows.length)return alert('ยังไม่มีข้อมูล');let data=rows.map(x=>({'Trade-In No.':x.id,'Branch':x.branch,'Branch Code':x.code,'Supplier':x.supplier,'Trade-In Date':fmt(x.date),'Age (Days)':x.age,'SLA':x.sla,'Overdue (Days)':x.over,'SLA Status':x.state,'Serial':x.serial,'Product Code':x.product}));let ws=XLSX.utils.json_to_sheet(data),wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Trade-In');XLSX.writeFile(wb,'TradeIn_Monitoring_Report.xlsx')};
-try{let saved=JSON.parse(localStorage.getItem('tradein_rows')||'[]');rows=saved.map((x,i)=>({...x,date:x.date?new Date(x.date):null}));render();fetch('/api/data').then(r=>r.ok?r.json():null).then(j=>{if(j&&Array.isArray(j.items)&&j.items.length){rows=j.items.map(x=>({...x,date:x.date?new Date(x.date):null}));localStorage.setItem('tradein_rows',JSON.stringify(rows));render()}}).catch(()=>{})}catch(e){}
-</script></body></html>
+const SLA = { KTS:15, ADD:15, COMPASIA:10 };
+let rows = [];
+
+const $ = id => document.getElementById(id);
+
+function norm(v) {
+  return String(v ?? "").trim().toLowerCase().replace(/[\s_\-().]/g, "");
+}
+
+function pick(obj, keys) {
+  for (const k of keys) {
+    const hit = Object.keys(obj).find(x => norm(x) === norm(k));
+    if (hit !== undefined && obj[hit] !== "" && obj[hit] != null) {
+      return obj[hit];
+    }
+  }
+  return "";
+}
+
+function supplier(v) {
+  const s = String(v || "").toUpperCase().replace(/[^A-Z]/g, "");
+  if (s.includes("KTS")) return "KTS";
+  if (s.includes("ADD")) return "ADD";
+  if (s.includes("COMP") || s.includes("ASIA")) return "COMPAsia";
+  return "";
+}
+
+function parseDate(v) {
+  if (v instanceof Date && !isNaN(v)) return v;
+
+  if (typeof v === "number" && window.XLSX) {
+    const parsed = XLSX.SSF.parse_date_code(v);
+    if (parsed) {
+      return new Date(Date.UTC(parsed.y, parsed.m - 1, parsed.d));
+    }
+  }
+
+  const s = String(v || "").trim();
+  if (!s) return null;
+
+  // รองรับ DD/MM/YYYY และปี พ.ศ.
+  const m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+  if (m) {
+    let d = Number(m[1]);
+    let mo = Number(m[2]) - 1;
+    let y = Number(m[3]);
+
+    if (y > 2400) y -= 543;
+
+    // ตรวจสอบกรณีข้อมูลเป็น MM/DD/YYYY
+    if (d > 12) {
+      return new Date(y, mo, d);
+    }
+    if (mo + 1 > 12) {
+      return new Date(y, d - 1, Number(m[2]));
+    }
+
+    // ค่าเริ่มต้นเป็น DD/MM/YYYY
+    return new Date(y, mo, d);
+  }
+
+  const dt = new Date(s);
+  return isNaN(dt) ? null : dt;
+}
+
+function dayDiff(a, b) {
+  return Math.floor(
+    (Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) -
+     Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 86400000
+  );
+}
+
+function normalizeRecord(o, i) {
+  const rawSup = pick(o, [
+    "Supplier", "supplier_name", "ซัพพลายเออร์", "Vendor"
+  ]);
+
+  const sup = supplier(rawSup);
+
+  const dt = parseDate(pick(o, [
+    "Trade-In Date", "Trade In Date", "วันที่ Trade-In",
+    "วันที่รับ Trade-In", "วันที่เริ่มต้น", "date_poRecieve_cal"
+  ]));
+
+  const rawStatus = String(pick(o, [
+    "Status", "สถานะ", "สถานะรายการ", "status"
+  ]) || "คงค้าง").trim();
+
+  const returned =
+    /ส่งคืนแล้ว|คืนแล้ว|completed|returned|closed|complete/i.test(rawStatus) ||
+    !!pick(o, ["Return Date", "วันที่ส่งคืน"]);
+
+  const id = pick(o, [
+    "Trade-In No.", "Trade-In No", "เลขที่ Trade-In",
+    "เลขที่รายการ", "Document No", "noINV"
+  ]) || `ROW-${i + 1}`;
+
+  const branch = pick(o, [
+    "Branch Name", "สาขา", "ชื่อสาขา", "Branch",
+    "StockBranch::branch_name"
+  ]);
+
+  const code = pick(o, [
+    "Branch Code", "รหัสสาขา", "StockBranch::branch_code"
+  ]);
+
+  const sla = SLA[sup.toUpperCase()] || null;
+
+  const rawAge = pick(o, [
+    "Age (Days)", "age_inBranch", "อายุสินค้า", "อายุ (วัน)"
+  ]);
+
+  let age = rawAge !== "" && rawAge != null && Number.isFinite(Number(rawAge))
+    ? Number(rawAge)
+    : dt ? dayDiff(dt, new Date()) : null;
+
+  const snapshot = parseDate(pick(o, ["date_stock", "Snapshot Date"]));
+
+  if (snapshot && age != null) {
+    age += Math.max(0, dayDiff(snapshot, new Date()));
+  }
+
+  const over = age != null && sla != null
+    ? Math.max(0, age - sla)
+    : null;
+
+  const state = returned
+    ? "returned"
+    : age == null || sla == null
+      ? "unknown"
+      : age > sla
+        ? "late"
+        : age >= sla - 3
+          ? "near"
+          : "normal";
+
+  return {
+    id: String(id),
+    branch: String(branch || code || "-"),
+    code: String(code || ""),
+    supplier: sup || String(rawSup || "ไม่ระบุ"),
+    date: dt,
+    age,
+    sla,
+    over,
+    state,
+    serial: String(pick(o, ["Serial Number", "Serial", "S/N", "IMEI", "product_sn"]) || ""),
+    product: String(pick(o, ["Product Code", "รหัสสินค้า", "product_upc", "ProductStore::product_name"]) || ""),
+    status: rawStatus
+  };
+}
+
+function fmt(d) {
+  return d ? d.toLocaleDateString("th-TH") : "-";
+}
+
+function statusLabel(state) {
+  return {
+    late: "เกิน SLA",
+    near: "ใกล้ครบกำหนด",
+    normal: "ปกติ",
+    returned: "ส่งคืนแล้ว",
+    unknown: "ตรวจสอบข้อมูล"
+  }[state] || "ตรวจสอบข้อมูล";
+}
+
+function render() {
+  const active = rows.filter(x => x.state !== "returned");
+
+  $("total").textContent = active.length;
+  $("normal").textContent = active.filter(x => ["normal", "near"].includes(x.state)).length;
+  $("near").textContent = active.filter(x => x.state === "near").length;
+  $("overdue").textContent = active.filter(x => x.state === "late").length;
+
+  $("supplierRows").innerHTML = ["KTS", "ADD", "COMPAsia"].map(s => {
+    const a = active.filter(x => x.supplier === s);
+    const sla = SLA[s.toUpperCase()];
+
+    return `
+      <tr>
+        <td><b>${esc(s)}</b></td>
+        <td>${sla} วัน</td>
+        <td>${a.length}</td>
+        <td>${a.filter(x => x.state === "near").length}</td>
+        <td><b style="color:var(--red)">${a.filter(x => x.state === "late").length}</b></td>
+      </tr>`;
+  }).join("");
+
+  const sf = $("supplierFilter").value;
+  const st = $("statusFilter").value;
+  const q = $("search").value.toLowerCase();
+
+  const shown = active
+    .filter(x => (!sf || x.supplier === sf))
+    .filter(x => (!st || x.state === st))
+    .filter(x => (!q || [x.id, x.branch, x.code, x.serial, x.product]
+      .join(" ").toLowerCase().includes(q)))
+    .sort((a, b) => (b.over ?? -1) - (a.over ?? -1));
+
+  $("records").innerHTML = shown.length
+    ? shown.map(x => `
+      <tr>
+        <td>${esc(x.id)}</td>
+        <td>${esc(x.branch)} ${x.code ? `<span class="note">(${esc(x.code)})</span>` : ""}</td>
+        <td>${esc(x.supplier)}</td>
+        <td>${fmt(x.date)}</td>
+        <td>${x.age ?? "-"}</td>
+        <td>${x.sla ?? "-"}</td>
+        <td>${x.over ?? "-"}</td>
+        <td><span class="pill ${
+          x.state === "late" ? "late" :
+          x.state === "near" ? "warn" :
+          x.state === "normal" ? "ok" : ""
+        }">${statusLabel(x.state)}</span></td>
+      </tr>`).join("")
+    : `<tr><td colspan="8" class="empty">ไม่พบรายการ</td></tr>`;
+}
+
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;", "<":"&lt;", ">":"&gt;",
+    '"':"&quot;", "'":"&#39;"
+  }[c]));
+}
+
+// นำเข้า Excel
+async function importFile(file) {
+  if (!file) return;
+
+  $("importMsg").innerHTML = `<div class="note">กำลังประมวลผลไฟล์ กรุณารอสักครู่...</div>`;
+
+  try {
+    const wb = XLSX.read(await file.arrayBuffer(), {
+      type: "array",
+      cellDates: true
+    });
+
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    let data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+
+    if (!data.length) {
+      throw new Error("ไม่พบข้อมูลในชีตแรก");
+    }
+
+    // กรอง Supplier ที่รองรับ
+    const recognized = data.filter(o => {
+      const s = supplier(pick(o, [
+        "supplier_name", "Supplier", "Vendor", "ซัพพลายเออร์"
+      ]));
+      return ["KTS", "ADD", "COMPAsia"].includes(s);
+    });
+
+    if (recognized.length) {
+      data = recognized;
+    } else {
+      throw new Error("ไม่พบข้อมูล Supplier KTS, ADD หรือ COMPAsia ในไฟล์");
+    }
+
+    rows = data.map(normalizeRecord);
+
+    // แสดงผล Dashboard ก่อน
+    render();
+
+    // บันทึกสำรองใน Browser
+    localStorage.setItem("tradein_rows", JSON.stringify(rows));
+
+    const missing = rows.filter(x => !x.date || !x.sla).length;
+
+    // ส่งข้อมูลไป Server เพื่อบันทึกและตรวจสอบ SLA / แจ้งเตือน LINE
+    try {
+      const response = await fetch("/api/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ items: rows })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "Server บันทึกข้อมูลไม่สำเร็จ");
+      }
+
+      let message = `
+        <div class="${missing ? "alertbox" : "successbox"}">
+          นำเข้าสำเร็จ ${rows.length} รายการ
+          ${missing ? ` · ${missing} รายการต้องตรวจสอบวันที่หรือ Supplier` : ""}
+        </div>`;
+
+      if (result.alertsSent) {
+        message += `
+          <div class="successbox">
+            ส่งแจ้งเตือน LINE สำเร็จ ${result.alertCount} รายการ
+          </div>`;
+      } else if (result.lineConfigured === false) {
+        message += `
+          <div class="note">
+            บันทึกข้อมูลบน Server แล้ว แต่ยังไม่ได้ตั้งค่า LINE Messaging API
+          </div>`;
+      } else {
+        message += `
+          <div class="note">
+            บันทึกข้อมูลบน Server แล้ว ไม่มีรายการที่ต้องแจ้งเตือน
+          </div>`;
+      }
+
+      $("importMsg").innerHTML = message;
+
+    } catch (serverError) {
+      $("importMsg").innerHTML = `
+        <div class="alertbox">
+          นำเข้าข้อมูลใน Browser แล้ว แต่เชื่อมต่อ Server ไม่สำเร็จ:
+          ${esc(serverError.message)}
+        </div>`;
+    }
+
+  } catch (err) {
+    $("importMsg").innerHTML = `
+      <div class="alertbox">นำเข้าไม่สำเร็จ: ${esc(err.message)}</div>`;
+  }
+}
+
+// เลือกไฟล์
+$("file").addEventListener("change", async e => {
+  await importFile(e.target.files[0]);
+  e.target.value = "";
+});
+
+// ลากไฟล์วาง
+const dropZone = $("dropZone");
+
+dropZone.addEventListener("dragover", e => {
+  e.preventDefault();
+  dropZone.style.background = "#eaf0ff";
+});
+
+dropZone.addEventListener("dragleave", () => {
+  dropZone.style.background = "#f9fbff";
+});
+
+dropZone.addEventListener("drop", async e => {
+  e.preventDefault();
+  dropZone.style.background = "#f9fbff";
+
+  const file = e.dataTransfer.files[0];
+  if (file) await importFile(file);
+});
+
+// Filters
+["supplierFilter", "statusFilter", "search"].forEach(id => {
+  $(id).addEventListener("input", render);
+});
+
+// Export Excel
+$("exportBtn").onclick = () => {
+  if (!rows.length) {
+    alert("ยังไม่มีข้อมูล");
+    return;
+  }
+
+  const data = rows.map(x => ({
+    "Trade-In No.": x.id,
+    "Branch": x.branch,
+    "Branch Code": x.code,
+    "Supplier": x.supplier,
+    "Trade-In Date": fmt(x.date),
+    "Age (Days)": x.age,
+    "SLA": x.sla,
+    "Overdue (Days)": x.over,
+    "SLA Status": statusLabel(x.state),
+    "Serial": x.serial,
+    "Product Code": x.product
+  }));
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(wb, ws, "Trade-In");
+  XLSX.writeFile(wb, "TradeIn_Monitoring_Report.xlsx");
+};
+
+// โหลดข้อมูลจาก Browser และ Server
+async function loadData() {
+  try {
+    const saved = JSON.parse(localStorage.getItem("tradein_rows") || "[]");
+
+    if (saved.length) {
+      rows = saved.map(x => ({
+        ...x,
+        date: x.date ? new Date(x.date) : null
+      }));
+      render();
+    }
+  } catch (e) {
+    console.error("Browser data error:", e);
+  }
+
+  try {
+    const response = await fetch("/api/data");
+
+    if (!response.ok) return;
+
+    const data = await response.json();
+
+    if (Array.isArray(data.items) && data.items.length) {
+      rows = data.items.map(x => ({
+        ...x,
+        date: x.date ? new Date(x.date) : null
+      }));
+
+      localStorage.setItem("tradein_rows", JSON.stringify(rows));
+      render();
+    }
+  } catch (e) {
+    console.log("Server data unavailable:", e.message);
+  }
+}
+
+loadData();
+</script>
+</body>
+</html>
