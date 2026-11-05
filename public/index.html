@@ -560,17 +560,25 @@ function norm(v) {
     .replace(/[\s_\-().]/g, "");
 }
 
+
 function pick(obj, keys) {
   for (const k of keys) {
-    const hit = Object.keys(obj).find(x => norm(x) === norm(k));
+    const hit = Object.keys(obj).find(
+      x => norm(x) === norm(k)
+    );
 
-    if (hit !== undefined && obj[hit] !== "" && obj[hit] != null) {
+    if (
+      hit !== undefined &&
+      obj[hit] !== "" &&
+      obj[hit] != null
+    ) {
       return obj[hit];
     }
   }
 
   return "";
 }
+
 
 function supplier(v) {
   const s = String(v || "").toUpperCase().replace(/[^A-Z]/g, "");
@@ -644,12 +652,13 @@ function normalizeRecord(o, i) {
   const returned =
     /ส่งคืนแล้ว|คืนแล้ว|completed|returned|closed|complete/i.test(rawStatus) ||
     !!pick(o, ["Return Date", "วันที่ส่งคืน"]);
-
- const id = pick(o, [
-    "product_sn", "Product SN", "PRODUCT_SN",
-    "Trade-In No.", "Trade-In No", "เลขที่ Trade-In",
-    "เลขที่รายการ", "Document No", "noINV"
-  ]) || `ROW-${i + 1}`;
+   
+const id = pick(o, [
+  "product_sn",
+  "product sn",
+  "Product SN",
+  "PRODUCT_SN"
+]) || `ROW-${i + 1}`;
 
   const branch = pick(o, [
     "Branch Name", "สาขา", "ชื่อสาขา", "Branch",
@@ -700,9 +709,11 @@ function normalizeRecord(o, i) {
     sla,
     over,
     state,
-    serial:String(pick(o, [
-      "Serial Number", "Serial", "S/N", "IMEI", "product_sn"
-    ]) || ""),
+    
+serial:String(pick(o, [
+  "Serial Number", "Serial", "S/N", "IMEI"
+]) || ""),
+
     product:String(pick(o, [
       "Product Code", "รหัสสินค้า", "product_upc",
       "ProductStore::product_name"
