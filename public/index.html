@@ -561,10 +561,25 @@ function norm(v) {
 }
 
 
+
 function pick(obj, keys) {
-  for (const k of keys) {
-    const hit = Object.keys(obj).find(
-      x => norm(x) === norm(k)
+  if (!obj || typeof obj !== "object") return "";
+
+  // ทำชื่อหัวตารางให้เป็นรูปแบบเดียวกันก่อนเปรียบเทียบ
+  function cleanKey(value) {
+    return String(value ?? "")
+      .toLowerCase()
+      .replace(/[\s\u00A0\u200B\uFEFF\-_().:]/g, "")
+      .trim();
+  }
+
+  const objectKeys = Object.keys(obj);
+
+  for (const key of keys) {
+    const target = cleanKey(key);
+
+    const hit = objectKeys.find(
+      originalKey => cleanKey(originalKey) === target
     );
 
     if (
@@ -578,6 +593,7 @@ function pick(obj, keys) {
 
   return "";
 }
+
 
 
 function supplier(v) {
