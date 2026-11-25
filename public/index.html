@@ -5,11 +5,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Trade-In Monitoring</title>
-
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
 <style>
-:root {
+:root{
   --bg:#f4f6fa;
   --card:#fff;
   --ink:#172033;
@@ -20,305 +19,117 @@
   --amber:#bd7900;
   --green:#16865b;
 }
-
-* { box-sizing:border-box; }
-
-body {
-  margin:0;
-  background:var(--bg);
-  color:var(--ink);
-  font:14px/1.6 Inter,"Noto Sans Thai",system-ui,sans-serif;
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font:14px/1.6 Inter,"Noto Sans Thai",system-ui,sans-serif
 }
-
-.app {
-  display:grid;
-  grid-template-columns:235px 1fr;
-  min-height:100vh;
+.app{display:grid;grid-template-columns:235px 1fr;min-height:100vh}
+.side{background:#17233d;color:white;padding:25px 17px}
+.brand{font-weight:800;font-size:18px;margin:5px 8px 30px}
+.brand small{display:block;color:#aebbd2;font-size:11px;font-weight:500;letter-spacing:1.4px}
+.nav{
+  display:block;width:100%;padding:11px 13px;border:0;
+  border-radius:10px;background:transparent;color:#d4dced;
+  text-align:left;font:inherit;margin:5px 0;cursor:pointer
 }
-
-.side {
-  background:#17233d;
-  color:white;
-  padding:25px 17px;
+.nav:hover,.nav.active{background:#2d4167;color:white}
+.side .hint{margin:35px 8px;color:#aebbd2;font-size:12px}
+main{padding:28px;max-width:1600px;width:100%;margin:auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;margin-bottom:23px}
+.top h1{font-size:25px;margin:0}
+.sub{color:var(--muted);margin-top:4px}
+.btn{
+  border:0;border-radius:9px;padding:10px 15px;
+  background:var(--blue);color:white;font-weight:650;cursor:pointer
 }
-
-.brand {
-  font-weight:800;
-  font-size:18px;
-  margin:5px 8px 30px;
+.btn.secondary{background:white;color:var(--ink);border:1px solid var(--line)}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:18px 0}
+.card,.panel{
+  background:var(--card);border:1px solid var(--line);
+  border-radius:14px;padding:17px;box-shadow:0 2px 8px #17233d08
 }
-
-.brand small {
-  display:block;
-  color:#aebbd2;
-  font-size:11px;
-  font-weight:500;
-  letter-spacing:1.4px;
+.metric-label{color:var(--muted);font-size:12px}
+.metric{font-size:30px;font-weight:800;margin:5px 0}
+.metric.red{color:var(--red)}
+.metric.green{color:var(--green)}
+.metric.amber{color:var(--amber)}
+.panel h2{font-size:16px;margin:0 0 14px}
+.toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
+.toolbar input,.toolbar select,input,select{
+  border:1px solid var(--line);border-radius:8px;
+  padding:9px;background:white;color:var(--ink)
 }
+.toolbar input[type=search]{min-width:210px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:11px 9px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-size:11px;font-weight:700;background:#fafbfe}
+.table-wrap{overflow:auto}
+.pill{padding:4px 8px;border-radius:30px;font-size:11px;font-weight:700;display:inline-block}
+.ok{background:#e6f6ee;color:var(--green)}
+.warn{background:#fff4dd;color:var(--amber)}
+.late{background:#ffeaed;color:var(--red)}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.upload{border:1.5px dashed #b9c5da;background:#f9fbff;border-radius:12px;padding:25px;text-align:center}
+.upload strong{display:block;margin-bottom:5px}
+.note{font-size:12px;color:var(--muted)}
+.alertbox{padding:12px;border-radius:10px;background:#fff2f3;color:#a92339;margin-top:12px;font-size:13px}
+.successbox{padding:12px;border-radius:10px;background:#eaf8f0;color:#176c4b;margin-top:12px;font-size:13px}
+.filters{display:flex;gap:8px;flex-wrap:wrap}
+.filters select{min-width:145px}
+.page{display:none}
+.page.active{display:block}
+footer{color:var(--muted);font-size:11px;margin:18px 2px}
 
-.nav {
-  display:block;
-  width:100%;
-  padding:11px 13px;
-  border:0;
-  border-radius:10px;
-  background:transparent;
-  color:#d4dced;
-  text-align:left;
-  font:inherit;
-  margin:5px 0;
-  cursor:pointer;
+/* Pivot report */
+.report-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.report-summary{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+.summary-chip{background:#f6f8fc;border:1px solid var(--line);border-radius:10px;padding:9px 13px}
+.summary-chip b{font-size:18px;margin-left:7px}
+.pivot-table th,.pivot-table td{border:1px solid #252525;padding:8px 10px}
+.pivot-table th{background:#f5f7fb;color:#172033;font-size:13px}
+.pivot-total{background:#f7c7ad;font-weight:800}
+.bucket-row{background:#f9e2d7;font-weight:700}
+.bucket-row td{padding:8px 10px}
+.branch-row td:first-child{padding-left:24px}
+.count-link{
+  border:0;background:transparent;color:#2454c6;
+  text-decoration:underline;font:inherit;font-weight:700;cursor:pointer;padding:0
 }
-
-.nav:hover,
-.nav.active {
-  background:#2d4167;
-  color:white;
+.count-link:hover{color:#d9364f}
+.report-tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.modal-backdrop{
+  position:fixed;inset:0;background:#10182888;display:none;
+  align-items:center;justify-content:center;padding:18px;z-index:20
 }
-
-.side .hint {
-  margin:35px 8px;
-  color:#aebbd2;
-  font-size:12px;
+.modal-backdrop.open{display:flex}
+.modal{
+  background:white;border-radius:14px;width:min(100%,1000px);
+  max-height:85vh;overflow:auto;padding:20px;box-shadow:0 20px 60px #0003
 }
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:12px}
+.modal-head h2{margin:0;font-size:18px}
+.close-btn{border:1px solid var(--line);background:white;border-radius:8px;padding:7px 11px;cursor:pointer}
+.detail-table td:first-child{font-weight:650}
 
-main {
-  padding:28px;
-  max-width:1500px;
-  width:100%;
-  margin:auto;
+@media(max-width:950px){
+  .app{grid-template-columns:1fr}
+  .side{padding:12px}
+  .brand{margin:5px 8px 12px}
+  .side nav{display:flex;overflow-x:auto;gap:5px}
+  .nav{width:auto;min-width:max-content;margin:0}
+  .side .hint{display:none}
+  main{padding:17px}
+  .cards{grid-template-columns:repeat(2,1fr)}
+  .top{align-items:flex-start;flex-direction:column}
 }
-
-.top {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  gap:15px;
-  margin-bottom:23px;
-}
-
-.top h1 {
-  font-size:25px;
-  margin:0;
-}
-
-.sub {
-  color:var(--muted);
-  margin-top:4px;
-}
-
-.btn {
-  border:0;
-  border-radius:9px;
-  padding:10px 15px;
-  background:var(--blue);
-  color:white;
-  font-weight:650;
-  cursor:pointer;
-}
-
-.btn.secondary {
-  background:white;
-  color:var(--ink);
-  border:1px solid var(--line);
-}
-
-.btn:hover { opacity:.85; }
-.btn:disabled { opacity:.45; cursor:not-allowed; }
-
-.cards {
-  display:grid;
-  grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:14px;
-  margin:18px 0;
-}
-
-.card,.panel {
-  background:var(--card);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:17px;
-  box-shadow:0 2px 8px #17233d08;
-}
-
-.metric-label {
-  color:var(--muted);
-  font-size:12px;
-}
-
-.metric {
-  font-size:30px;
-  font-weight:800;
-  margin:5px 0;
-}
-
-.metric.red { color:var(--red); }
-.metric.green { color:var(--green); }
-.metric.amber { color:var(--amber); }
-
-.layout {
-  display:grid;
-  grid-template-columns:1fr;
-  gap:15px;
-  margin-bottom:15px;
-}
-
-.panel h2 {
-  font-size:16px;
-  margin:0 0 14px;
-}
-
-.toolbar {
-  display:flex;
-  gap:9px;
-  flex-wrap:wrap;
-  align-items:center;
-  margin-bottom:13px;
-}
-
-.toolbar input,.toolbar select,input,select {
-  border:1px solid var(--line);
-  border-radius:8px;
-  padding:9px;
-  background:white;
-  color:var(--ink);
-}
-
-.toolbar input[type=search] {
-  min-width:210px;
-}
-
-table {
-  width:100%;
-  border-collapse:collapse;
-  font-size:13px;
-}
-
-th,td {
-  text-align:left;
-  padding:11px 9px;
-  border-bottom:1px solid var(--line);
-  white-space:nowrap;
-}
-
-th {
-  color:var(--muted);
-  font-size:11px;
-  font-weight:700;
-  background:#fafbfe;
-}
-
-.table-wrap { overflow:auto; }
-
-.pill {
-  padding:4px 8px;
-  border-radius:30px;
-  font-size:11px;
-  font-weight:700;
-  display:inline-block;
-}
-
-.ok { background:#e6f6ee; color:var(--green); }
-.warn { background:#fff4dd; color:var(--amber); }
-.late { background:#ffeaed; color:var(--red); }
-
-.empty {
-  padding:28px;
-  text-align:center;
-  color:var(--muted);
-}
-
-.upload {
-  border:1.5px dashed #b9c5da;
-  background:#f9fbff;
-  border-radius:12px;
-  padding:25px;
-  text-align:center;
-}
-
-.upload strong {
-  display:block;
-  margin-bottom:5px;
-}
-
-.note {
-  font-size:12px;
-  color:var(--muted);
-}
-
-.alertbox {
-  padding:12px;
-  border-radius:10px;
-  background:#fff2f3;
-  color:#a92339;
-  margin-top:12px;
-  font-size:13px;
-}
-
-.successbox {
-  padding:12px;
-  border-radius:10px;
-  background:#eaf8f0;
-  color:#176c4b;
-  margin-top:12px;
-  font-size:13px;
-}
-
-.filters {
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-}
-
-.filters select { min-width:145px; }
-
-.page { display:none; }
-.page.active { display:block; }
-
-footer {
-  color:var(--muted);
-  font-size:11px;
-  margin:18px 2px;
-}
-
-@media(max-width:950px) {
-  .app { grid-template-columns:1fr; }
-
-  .side {
-    padding:12px;
-  }
-
-  .brand {
-    margin:5px 8px 12px;
-  }
-
-  .side nav {
-    display:flex;
-    overflow-x:auto;
-    gap:5px;
-  }
-
-  .nav {
-    width:auto;
-    min-width:max-content;
-    margin:0;
-  }
-
-  .side .hint { display:none; }
-
-  main { padding:17px; }
-
-  .cards { grid-template-columns:repeat(2,1fr); }
-
-  .top {
-    align-items:flex-start;
-    flex-direction:column;
-  }
-}
-
-@media(max-width:500px) {
-  .cards { grid-template-columns:1fr 1fr; }
-  .metric { font-size:24px; }
+@media(max-width:500px){
+  .cards{grid-template-columns:1fr 1fr}
+  .metric{font-size:24px}
+  main{padding:12px}
+  .panel{padding:12px}
 }
 </style>
 </head>
@@ -327,18 +138,14 @@ footer {
 <div class="app">
 
 <aside class="side">
-  <div class="brand">
-    TRADE-IN
-    <small>MONITORING SYSTEM</small>
-  </div>
-
+  <div class="brand">TRADE-IN<small>MONITORING SYSTEM</small></div>
   <nav>
     <button class="nav active" data-target="dashboardPage">▦ ภาพรวม Dashboard</button>
     <button class="nav" data-target="recordsPage">▤ รายการ Trade-In</button>
+    <button class="nav" data-target="pivotPage">▥ รายงานอายุสินค้า</button>
     <button class="nav" data-target="importPage">⇧ นำเข้าข้อมูล Excel</button>
     <button class="nav" data-target="historyPage">◷ ประวัติการแจ้งเตือน</button>
   </nav>
-
   <div class="hint">
     ติดตาม SLA แยกตาม Supplier<br>
     KTS 15 วัน · ADD 15 วัน<br>
@@ -350,13 +157,11 @@ footer {
 
 <!-- DASHBOARD -->
 <section class="page active" id="dashboardPage">
-
   <div class="top">
     <div>
       <h1>Trade-In Monitoring</h1>
       <div class="sub">ติดตามสินค้าคงค้างและ SLA การส่งคืน Supplier</div>
     </div>
-
     <div class="toolbar">
       <button class="btn secondary" id="exportBtn">ส่งออก Excel</button>
       <button class="btn" onclick="showPage('importPage')">＋ นำเข้า Excel</button>
@@ -369,19 +174,16 @@ footer {
       <div class="metric" id="total">0</div>
       <div class="note">รายการที่ยังไม่ส่งคืน</div>
     </div>
-
     <div class="card">
       <div class="metric-label">ยังไม่เกิน SLA</div>
       <div class="metric green" id="normal">0</div>
       <div class="note">รวมรายการปกติและใกล้ครบกำหนด</div>
     </div>
-
     <div class="card">
       <div class="metric-label">ใกล้ครบกำหนด (ภายใน 3 วัน)</div>
       <div class="metric amber" id="near">0</div>
       <div class="note">เตรียมติดตามสาขา</div>
     </div>
-
     <div class="card">
       <div class="metric-label">เกินกำหนด SLA</div>
       <div class="metric red" id="overdue">0</div>
@@ -395,11 +197,8 @@ footer {
       <table>
         <thead>
           <tr>
-            <th>Supplier</th>
-            <th>SLA</th>
-            <th>คงค้าง</th>
-            <th>ใกล้ครบกำหนด</th>
-            <th>เกิน SLA</th>
+            <th>Supplier</th><th>SLA</th><th>คงค้าง</th>
+            <th>ใกล้ครบกำหนด</th><th>เกิน SLA</th>
           </tr>
         </thead>
         <tbody id="supplierRows">
@@ -408,7 +207,6 @@ footer {
       </table>
     </div>
   </section>
-
 </section>
 
 <!-- TRADE-IN RECORDS -->
@@ -416,7 +214,6 @@ footer {
   <section class="panel">
     <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center">
       <h2>รายการ Trade-In คงค้าง</h2>
-
       <div class="filters">
         <select id="supplierFilter">
           <option value="">ทุก Supplier</option>
@@ -424,7 +221,6 @@ footer {
           <option value="ADD">ADD</option>
           <option value="COMPAsia">COMPAsia</option>
         </select>
-
         <select id="statusFilter">
           <option value="">ทุกสถานะ SLA</option>
           <option value="normal">ปกติ</option>
@@ -432,8 +228,7 @@ footer {
           <option value="late">เกิน SLA</option>
           <option value="unknown">ตรวจสอบข้อมูล</option>
         </select>
-
-        <input id="search" type="search" placeholder="ค้นหาสาขา / เลขที่ / Serial">
+        <input id="search" type="search" placeholder="ค้นหา noINV / สาขา / Serial">
       </div>
     </div>
 
@@ -441,20 +236,60 @@ footer {
       <table>
         <thead>
           <tr>
-            <th>Trade-In No.</th>
-            <th>สาขา</th>
-            <th>Supplier</th>
-            <th>Trade-In Date</th>
-            <th>อายุ (วัน)</th>
-            <th>SLA</th>
-            <th>เกิน (วัน)</th>
-            <th>สถานะ</th>
+            <th>noINV</th><th>product_sn</th><th>สาขา</th>
+            <th>Supplier</th><th>Trade-In Date</th><th>อายุสาขา</th>
+            <th>SLA</th><th>เกิน (วัน)</th><th>สถานะ</th>
           </tr>
         </thead>
         <tbody id="records">
-          <tr><td colspan="8" class="empty">ยังไม่มีข้อมูล กรุณานำเข้า Excel</td></tr>
+          <tr><td colspan="9" class="empty">ยังไม่มีข้อมูล กรุณานำเข้า Excel</td></tr>
         </tbody>
       </table>
+    </div>
+  </section>
+</section>
+
+<!-- PIVOT REPORT -->
+<section class="page" id="pivotPage">
+  <section class="panel">
+    <div class="report-head">
+      <div>
+        <h2 style="margin-bottom:3px">รายงานสรุปอายุสินค้า Trade-In</h2>
+        <div class="sub">Pivot Table แยกช่วงอายุ Invoice ตามสาขา โดยนับจำนวนจาก product_sn</div>
+      </div>
+      <button class="btn secondary" id="refreshPivotBtn">↻ รีเฟรชรายงาน</button>
+    </div>
+
+    <div class="report-summary">
+      <div class="summary-chip">Serial Number ทั้งหมด <b id="pivotTotal">0</b></div>
+      <div class="summary-chip">ไม่อยู่ในช่วงที่กำหนด <b id="pivotUnclassified">0</b></div>
+      <div class="summary-chip">นำเข้าล่าสุด <b id="pivotImportedAt">-</b></div>
+    </div>
+
+    <div class="report-tools">
+      <input id="pivotSearch" type="search" placeholder="ค้นหาสาขา">
+      <button class="btn secondary" id="exportPivotBtn">Export Pivot Excel</button>
+      <button class="btn secondary" id="exportDetailBtn">Export รายละเอียดทั้งหมด</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="pivot-table">
+        <thead>
+          <tr>
+            <th style="min-width:190px">age_ofINV</th>
+            <th style="min-width:180px">สาขา</th>
+            <th style="min-width:130px;text-align:right">Count of product_sn</th>
+          </tr>
+        </thead>
+        <tbody id="pivotRows">
+          <tr><td colspan="3" class="empty">กำลังโหลดรายงาน...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note" style="margin-top:10px">
+      คลิกตัวเลขในคอลัมน์จำนวน เพื่อดู noINV และ product_sn ของรายการในกลุ่มนั้น
+      · ไม่นับรายการที่ไม่มี Serial Number หรือส่งคืนแล้ว
     </div>
   </section>
 </section>
@@ -463,21 +298,17 @@ footer {
 <section class="page" id="importPage">
   <section class="panel">
     <h2>นำเข้าข้อมูล Excel</h2>
-
     <div class="upload" id="dropZone">
       <strong>ลากไฟล์ Excel มาวาง หรือเลือกไฟล์</strong>
       <span class="note">รองรับ .xlsx, .xls และ .csv</span>
       <br><br>
-
       <button class="btn secondary" onclick="document.getElementById('file').click()">เลือกไฟล์</button>
       <input id="file" type="file" accept=".xlsx,.xls,.csv" hidden>
     </div>
-
     <div class="note" style="margin-top:12px">
-      รองรับ Supplier, noINV, product_sn, age_inBranch,
-      date_stock และชื่อสาขาจากไฟล์ต้นทาง
+      คอลัมน์ที่รองรับ: Supplier, noINV, product_sn, age_ofINV,
+      age_inBranch, date_stock และชื่อสาขาจากไฟล์ต้นทาง
     </div>
-
     <div id="importMsg"></div>
   </section>
 </section>
@@ -486,20 +317,13 @@ footer {
 <section class="page" id="historyPage">
   <section class="panel">
     <h2>ประวัติการแจ้งเตือน LINE</h2>
-
     <div class="toolbar">
       <button class="btn secondary" onclick="loadHistory()">↻ รีเฟรชประวัติ</button>
     </div>
-
     <div class="table-wrap">
       <table>
         <thead>
-          <tr>
-            <th>วันและเวลา</th>
-            <th>หัวข้อ</th>
-            <th>จำนวนรายการ</th>
-            <th>รายละเอียด</th>
-          </tr>
+          <tr><th>วันและเวลา</th><th>หัวข้อ</th><th>จำนวนรายการ</th><th>รายละเอียด</th></tr>
         </thead>
         <tbody id="historyRows">
           <tr><td colspan="4" class="empty">กดเมนูประวัติการแจ้งเตือนเพื่อโหลดข้อมูล</td></tr>
@@ -509,181 +333,149 @@ footer {
   </section>
 </section>
 
-<footer>
-  Trade-In Monitoring · คัดเฉพาะรายการ Trade-In KTS / ADD / COMPAsia
-</footer>
-
+<footer>Trade-In Monitoring · KTS / ADD / COMPAsia</footer>
 </main>
 </div>
 
+<!-- DETAIL MODAL -->
+<div class="modal-backdrop" id="detailModal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <h2 id="detailTitle">รายละเอียดสินค้า</h2>
+        <div class="sub" id="detailSubtitle"></div>
+      </div>
+      <button class="close-btn" id="closeModalBtn">ปิด ✕</button>
+    </div>
+
+    <div class="toolbar">
+      <input id="detailSearch" type="search" placeholder="ค้นหา noINV หรือ product_sn">
+      <button class="btn secondary" id="exportCurrentDetailBtn">Export รายการนี้</button>
+    </div>
+
+    <div class="table-wrap">
+      <table class="detail-table">
+        <thead>
+          <tr>
+            <th>noINV</th><th>product_sn</th><th>สาขา</th>
+            <th>Supplier</th><th>age_ofINV (วัน)</th>
+          </tr>
+        </thead>
+        <tbody id="detailRows">
+          <tr><td colspan="5" class="empty">กำลังโหลด...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <script>
-const SLA = {
-  KTS:15,
-  ADD:15,
-  COMPASIA:10
-};
+const SLA={KTS:15,ADD:15,COMPASIA:10};
 
-let rows = [];
+const AGE_BUCKETS=[
+  {key:"1-15",label:"1-15 Day"},
+  {key:"16-20",label:"16-20 Day"},
+  {key:"21-30",label:"21-30 Day"},
+  {key:"31-40",label:"31-40 Day"},
+  {key:"41-50",label:"41-50 Day"},
+  {key:"51-60",label:"51-60 Day"},
+  {key:"over-60",label:">60 Day"}
+];
 
-const $ = id => document.getElementById(id);
+let rows=[];
+let pivotData=null;
+let currentDetails=[];
+let currentDetailContext={bucket:"",branch:""};
 
+const $=id=>document.getElementById(id);
 
-// จัดรูปแบบวันที่และข้อมูล
-function fmt(value) {
-  if (value === null || value === undefined || value === "") {
-    return "-";
+function norm(v){
+  return String(v??"").trim().toLowerCase().replace(/[\s_\-().:]/g,"");
+}
+
+function pick(obj,keys){
+  if(!obj||typeof obj!=="object")return "";
+  const keysIn=Object.keys(obj);
+
+  for(const key of keys){
+    const target=norm(key);
+    const hit=keysIn.find(k=>norm(k)===target);
+
+    if(hit!==undefined&&obj[hit]!==""&&obj[hit]!=null){
+      return obj[hit];
+    }
+  }
+  return "";
+}
+
+function supplier(v){
+  const s=String(v||"").toUpperCase().replace(/[^A-Z]/g,"");
+
+  if(s.includes("KTS"))return "KTS";
+  if(s.includes("ADD"))return "ADD";
+  if(s.includes("COMP")||s.includes("ASIA"))return "COMPAsia";
+
+  return "";
+}
+
+function parseDate(v){
+  if(v instanceof Date&&!isNaN(v))return v;
+
+  if(typeof v==="number"&&window.XLSX){
+    const p=XLSX.SSF.parse_date_code(v);
+    if(p)return new Date(p.y,p.m-1,p.d);
   }
 
-  if (value instanceof Date && !isNaN(value)) {
-    return value.toLocaleDateString("th-TH", {
-      day:"2-digit",
-      month:"2-digit",
-      year:"numeric"
-    });
+  const s=String(v||"").trim();
+  if(!s)return null;
+
+  const m=s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
+
+  if(m){
+    const d=+m[1],mo=+m[2];
+    let y=+m[3];
+    if(y>2400)y-=543;
+
+    const dt=new Date(y,mo-1,d);
+
+    return dt.getFullYear()===y&&
+      dt.getMonth()===mo-1&&
+      dt.getDate()===d?dt:null;
   }
+
+  const dt=new Date(s);
+  return isNaN(dt)?null:dt;
+}
+
+function dayDiff(a,b){
+  return Math.floor(
+    (Date.UTC(b.getFullYear(),b.getMonth(),b.getDate())-
+    Date.UTC(a.getFullYear(),a.getMonth(),a.getDate()))/86400000
+  );
+}
+
+function fmt(value){
+  if(value==null||value==="")return "-";
+
+  const d=value instanceof Date?value:new Date(value);
+
+  if(!isNaN(d))return d.toLocaleDateString("th-TH");
 
   return String(value).trim();
 }
 
+// ========================================
+// NORMALIZE EXCEL ROW
+// ========================================
 
-// เปลี่ยนหน้าเมนู
-function showPage(pageId) {
-  document.querySelectorAll(".page").forEach(page => {
-    page.classList.toggle("active", page.id === pageId);
-  });
-
-  document.querySelectorAll(".nav").forEach(button => {
-    button.classList.toggle(
-      "active",
-      button.dataset.target === pageId
-    );
-  });
-
-  if (pageId === "historyPage") {
-    loadHistory();
-  }
-
-  window.scrollTo({ top:0, behavior:"smooth" });
-}
-
-document.querySelectorAll(".nav[data-target]").forEach(button => {
-  button.addEventListener("click", () => {
-    showPage(button.dataset.target);
-  });
-});
-
-
-function norm(v) {
-  return String(v ?? "")
-    .trim()
-    .toLowerCase()
-    .replace(/[\s_\-().]/g, "");
-}
-
-
-function pick(obj, keys) {
-  if (!obj || typeof obj !== "object") return "";
-
-  function cleanKey(value) {
-    return String(value ?? "")
-      .toLowerCase()
-      .replace(/[\s\u00A0\u200B\uFEFF\-_().:]/g, "")
-      .trim();
-  }
-
-  const objectKeys = Object.keys(obj);
-
-  for (const key of keys) {
-    const target = cleanKey(key);
-
-    const hit = objectKeys.find(
-      originalKey => cleanKey(originalKey) === target
-    );
-
-    if (
-      hit !== undefined &&
-      obj[hit] !== "" &&
-      obj[hit] != null
-    ) {
-      return obj[hit];
-    }
-  }
-
-  return "";
-}
-
-
-function supplier(v) {
-  const s = String(v || "").toUpperCase().replace(/[^A-Z]/g, "");
-
-  if (s.includes("KTS")) return "KTS";
-  if (s.includes("ADD")) return "ADD";
-  if (s.includes("COMP") || s.includes("ASIA")) return "COMPAsia";
-
-  return "";
-}
-
-
-function parseDate(v) {
-  if (v instanceof Date && !isNaN(v)) return v;
-
-  if (typeof v === "number" && window.XLSX) {
-    const parsed = XLSX.SSF.parse_date_code(v);
-
-    if (parsed) {
-      return new Date(parsed.y, parsed.m - 1, parsed.d);
-    }
-  }
-
-  const s = String(v || "").trim();
-  if (!s) return null;
-
-  // รองรับ DD/MM/YYYY และปี พ.ศ.
-  const m = s.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})$/);
-
-  if (m) {
-    const d = Number(m[1]);
-    const mo = Number(m[2]);
-    let y = Number(m[3]);
-
-    if (y > 2400) y -= 543;
-
-    if (mo < 1 || mo > 12 || d < 1 || d > 31) return null;
-
-    const result = new Date(y, mo - 1, d);
-
-    if (
-      result.getFullYear() !== y ||
-      result.getMonth() !== mo - 1 ||
-      result.getDate() !== d
-    ) {
-      return null;
-    }
-
-    return result;
-  }
-
-  const dt = new Date(s);
-  return isNaN(dt) ? null : dt;
-}
-
-
-function dayDiff(a, b) {
-  return Math.floor(
-    (Date.UTC(b.getFullYear(), b.getMonth(), b.getDate()) -
-     Date.UTC(a.getFullYear(), a.getMonth(), a.getDate())) / 86400000
-  );
-}
-
-
-function normalizeRecord(o, i) {
-  const rawSup = pick(o, [
-    "Supplier", "supplier_name", "ซัพพลายเออร์", "Vendor"
+function normalizeRecord(o,i){
+  const rawSup=pick(o,[
+    "Supplier","supplier_name","ซัพพลายเออร์","Vendor"
   ]);
 
-  const sup = supplier(rawSup);
+  const sup=supplier(rawSup);
 
-  const dt = parseDate(pick(o, [
+  const dt=parseDate(pick(o,[
     "Trade-In Date",
     "Trade In Date",
     "วันที่ Trade-In",
@@ -692,112 +484,121 @@ function normalizeRecord(o, i) {
     "date_poRecieve_cal"
   ]));
 
-  const rawStatus = String(pick(o, [
-    "Status", "สถานะ", "สถานะรายการ"
-  ]) || "คงค้าง").trim();
+  const rawStatus=String(pick(o,[
+    "Status","สถานะ","สถานะรายการ"
+  ])||"คงค้าง").trim();
 
-  const returned =
-    /ส่งคืนแล้ว|คืนแล้ว|completed|returned|closed|complete/i.test(rawStatus) ||
-    !!pick(o, ["Return Date", "วันที่ส่งคืน"]);
+  const returned=
+    /ส่งคืนแล้ว|คืนแล้ว|completed|returned|closed|complete/i.test(rawStatus)||
+    !!pick(o,["Return Date","วันที่ส่งคืน"]);
 
-  const id = pick(o, [
-    "Trade-In No.",
-    "Trade In No.",
-    "Trade-In No",
-    "Trade In No",
-    "Trade-In Number",
-    "Trade In Number",
-    "TradeIn No",
-    "TradeInNo",
-    "tradein_no",
-    "trade_in_no",
-    "tradein_number",
-    "noINV",
-    "product_sn",
-    "product sn",
-    "Product SN",
-    "PRODUCT_SN"
-  ]) || `ROW-${i + 1}`;
+  // Invoice Number
+  const noINV=String(pick(o,[
+    "noINV","no INV","Invoice No","Invoice Number",
+    "Trade-In No.","Trade In No."
+  ])||"").trim();
 
-  const branch = pick(o, [
-    "Branch Name", "สาขา", "ชื่อสาขา", "Branch",
+  // Serial Number
+  const productSN=String(pick(o,[
+    "product_sn","product sn","Product SN","PRODUCT_SN",
+    "Serial Number","Serial","S/N","IMEI"
+  ])||"").trim();
+
+  const id=noINV||
+    String(pick(o,[
+      "Trade-In No.","Trade In No.",
+      "Trade-In Number","TradeInNo"
+    ])||productSN||`ROW-${i+1}`);
+
+  const branch=pick(o,[
+    "Branch Name","สาขา","ชื่อสาขา","Branch",
     "StockBranch::branch_name"
   ]);
 
-  const code = pick(o, [
-    "Branch Code", "รหัสสาขา", "StockBranch::branch_code"
+  const code=pick(o,[
+    "Branch Code","รหัสสาขา",
+    "StockBranch::branch_code"
   ]);
 
-  const sla = SLA[sup.toUpperCase()] || null;
-
-  const rawAge = pick(o, [
-    "Age (Days)", "age_inBranch", "อายุสินค้า", "อายุ (วัน)"
+  // อายุสาขา ใช้คำนวณ SLA
+  const rawAge=pick(o,[
+    "Age (Days)","age_inBranch","อายุสินค้า","อายุ (วัน)"
   ]);
 
-  let age = rawAge !== "" && rawAge != null && Number.isFinite(Number(rawAge))
-    ? Number(rawAge)
-    : dt ? dayDiff(dt, new Date()) : null;
+  let age=rawAge!==""&&rawAge!=null&&Number.isFinite(Number(rawAge))
+    ?Number(rawAge)
+    :dt?dayDiff(dt,new Date()):null;
 
-  const snapshot = parseDate(pick(o, [
-    "date_stock", "Snapshot Date"
+  const snapshot=parseDate(pick(o,[
+    "date_stock","Snapshot Date"
   ]));
 
-  if (snapshot && age != null) {
-    age += Math.max(0, dayDiff(snapshot, new Date()));
+  if(snapshot&&age!=null){
+    age+=Math.max(0,dayDiff(snapshot,new Date()));
   }
 
-  const over = age != null && sla != null
-    ? Math.max(0, age - sla)
-    : null;
+  // อายุ Invoice ใช้ทำ Pivot Table
+  const rawAgeInv=pick(o,[
+    "age_ofINV","age of INV","age_of_inv"
+  ]);
 
-  const state = returned
-    ? "returned"
-    : age == null || sla == null
-      ? "unknown"
-      : age > sla
-        ? "late"
-        : age >= sla - 3
-          ? "near"
-          : "normal";
+  const ageOfInv=
+    rawAgeInv!==""&&
+    rawAgeInv!=null&&
+    Number.isFinite(Number(rawAgeInv))
+      ?Number(rawAgeInv)
+      :null;
+
+  const sla=SLA[sup.toUpperCase()]||null;
+
+  const over=age!=null&&sla!=null
+    ?Math.max(0,age-sla)
+    :null;
+
+  const state=returned
+    ?"returned"
+    :age==null||sla==null
+      ?"unknown"
+      :age>sla
+        ?"late"
+        :age>=sla-3
+          ?"near"
+          :"normal";
 
   return {
     id:String(id),
-    branch:String(branch || code || "-"),
-    code:String(code || ""),
-    supplier:sup || String(rawSup || "ไม่ระบุ"),
+    noINV,
+    product_sn:productSN,
+    serial:productSN,
+    branch:String(branch||code||"ไม่ระบุสาข"),
+    code:String(code||""),
+    supplier:sup||String(rawSup||"ไม่ระบุ"),
     date:dt,
     age,
+    ageOfInv,
     sla,
     over,
     state,
-
-    serial:String(pick(o, [
-      "Serial Number", "Serial", "S/N", "IMEI"
-    ]) || ""),
-
-    product:String(pick(o, [
-      "Product Code", "รหัสสินค้า", "product_upc",
+    status:rawStatus,
+    product:String(pick(o,[
+      "Product Code","รหัสสินค้า","product_upc",
       "ProductStore::product_name"
-    ]) || ""),
-
-    status:rawStatus
+    ])||"")
   };
 }
 
-
-function statusLabel(state) {
-  return {
+function statusLabel(state){
+  return{
     late:"เกิน SLA",
     near:"ใกล้ครบกำหนด",
     normal:"ปกติ",
     returned:"ส่งคืนแล้ว",
     unknown:"ตรวจสอบข้อมูล"
-  }[state] || "ตรวจสอบข้อมูล";
+  }[state]||"ตรวจสอบข้อมูล";
 }
 
-
-function esc(s) {
-  return String(s ?? "").replace(/[&<>"']/g, c => ({
+function esc(s){
+  return String(s??"").replace(/[&<>"']/g,c=>({
     "&":"&amp;",
     "<":"&lt;",
     ">":"&gt;",
@@ -806,314 +607,610 @@ function esc(s) {
   }[c]));
 }
 
+// ========================================
+// PAGE NAVIGATION
+// ========================================
 
-function render() {
-  const active = rows.filter(x => x.state !== "returned");
+function showPage(pageId){
+  document.querySelectorAll(".page").forEach(p=>{
+    p.classList.toggle("active",p.id===pageId);
+  });
 
-  $("total").textContent = active.length;
+  document.querySelectorAll(".nav").forEach(b=>{
+    b.classList.toggle("active",b.dataset.target===pageId);
+  });
 
-  $("normal").textContent = active.filter(x =>
+  if(pageId==="historyPage")loadHistory();
+  if(pageId==="pivotPage")loadPivot();
+
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+document.querySelectorAll(".nav[data-target]").forEach(b=>{
+  b.addEventListener("click",()=>showPage(b.dataset.target));
+});
+
+// ========================================
+// DASHBOARD & RECORDS
+// ========================================
+
+function render(){
+  const active=rows.filter(x=>x.state!=="returned");
+
+  $("total").textContent=active.length;
+
+  $("normal").textContent=active.filter(x=>
     ["normal","near"].includes(x.state)
   ).length;
 
-  $("near").textContent = active.filter(x => x.state === "near").length;
+  $("near").textContent=active.filter(x=>
+    x.state==="near"
+  ).length;
 
-  $("overdue").textContent = active.filter(x => x.state === "late").length;
+  $("overdue").textContent=active.filter(x=>
+    x.state==="late"
+  ).length;
 
-  $("supplierRows").innerHTML = ["KTS","ADD","COMPAsia"].map(s => {
-    const a = active.filter(x => x.supplier === s);
-    const sla = SLA[s.toUpperCase()];
+  $("supplierRows").innerHTML=["KTS","ADD","COMPAsia"].map(s=>{
+    const a=active.filter(x=>x.supplier===s);
 
     return `
       <tr>
         <td><b>${esc(s)}</b></td>
-        <td>${sla} วัน</td>
+        <td>${SLA[s.toUpperCase()]} วัน</td>
         <td>${a.length}</td>
-        <td>${a.filter(x => x.state === "near").length}</td>
-        <td><b style="color:var(--red)">${a.filter(x => x.state === "late").length}</b></td>
+        <td>${a.filter(x=>x.state==="near").length}</td>
+        <td><b style="color:var(--red)">${a.filter(x=>x.state==="late").length}</b></td>
       </tr>
     `;
   }).join("");
 
-  const sf = $("supplierFilter").value;
-  const st = $("statusFilter").value;
-  const q = $("search").value.toLowerCase();
+  const sf=$("supplierFilter").value;
+  const st=$("statusFilter").value;
+  const q=$("search").value.toLowerCase();
 
-  const shown = active
-    .filter(x => !sf || x.supplier === sf)
-    .filter(x => !st || x.state === st)
-    .filter(x =>
-      !q || [x.id,x.branch,x.code,x.serial,x.product]
-        .join(" ").toLowerCase().includes(q)
-    )
-    .sort((a,b) => (b.over ?? -1) - (a.over ?? -1));
+  const shown=active
+    .filter(x=>!sf||x.supplier===sf)
+    .filter(x=>!st||x.state===st)
+    .filter(x=>!q||[
+      x.noINV,x.product_sn,x.branch,x.code,x.supplier
+    ].join(" ").toLowerCase().includes(q))
+    .sort((a,b)=>(b.over??-1)-(a.over??-1));
 
-  $("records").innerHTML = shown.length
-    ? shown.map(x => `
+  $("records").innerHTML=shown.length
+    ?shown.map(x=>`
       <tr>
-        <td>${esc(x.id || "-")}</td>
-        <td>${esc(x.branch)} ${x.code ? `<span class="note">(${esc(x.code)})</span>` : ""}</td>
+        <td>${esc(x.noINV||x.id||"-")}</td>
+        <td>${esc(x.product_sn||"-")}</td>
+        <td>
+          ${esc(x.branch)}
+          ${x.code?`<span class="note">(${esc(x.code)})</span>`:""}
+        </td>
         <td>${esc(x.supplier)}</td>
         <td>${fmt(x.date)}</td>
-        <td>${x.age ?? "-"}</td>
-        <td>${x.sla ?? "-"}</td>
-        <td>${x.over ?? "-"}</td>
+        <td>${x.age??"-"}</td>
+        <td>${x.sla??"-"}</td>
+        <td>${x.over??"-"}</td>
         <td>
           <span class="pill ${
-            x.state === "late" ? "late" :
-            x.state === "near" ? "warn" :
-            x.state === "normal" ? "ok" : ""
+            x.state==="late"?"late":
+            x.state==="near"?"warn":
+            x.state==="normal"?"ok":""
           }">${statusLabel(x.state)}</span>
         </td>
       </tr>
     `).join("")
-    : `<tr><td colspan="8" class="empty">ไม่พบรายการ</td></tr>`;
+    :`<tr><td colspan="9" class="empty">ไม่พบรายการ</td></tr>`;
 }
 
+// ========================================
+// PIVOT REPORT
+// ========================================
 
-// นำเข้า Excel
-async function importFile(file) {
-  if (!file) return;
+async function loadPivot(){
+  const tbody=$("pivotRows");
 
-  $("importMsg").innerHTML =
-    `<div class="note">กำลังประมวลผลไฟล์ กรุณารอสักครู่...</div>`;
+  tbody.innerHTML=
+    '<tr><td colspan="3" class="empty">กำลังโหลดรายงาน...</td></tr>';
 
-  try {
-    if (!window.XLSX) {
-      throw new Error("ไม่สามารถโหลดระบบอ่าน Excel ได้ กรุณาตรวจสอบอินเทอร์เน็ต");
+  try{
+    const response=await fetch("/api/report/pivot");
+    const data=await response.json();
+
+    if(!response.ok){
+      throw new Error(data.error||"โหลดรายงานไม่สำเร็จ");
     }
 
-    const wb = XLSX.read(await file.arrayBuffer(), {
-      type:"array",
-      cellDates:true
-    });
+    pivotData=data;
 
-    const sheet = wb.Sheets[wb.SheetNames[0]];
+    $("pivotTotal").textContent=data.total??0;
+    $("pivotUnclassified").textContent=data.unclassified??0;
 
-    let data = XLSX.utils.sheet_to_json(sheet, { defval:"" });
+    $("pivotImportedAt").textContent=data.importedAt
+      ?new Date(data.importedAt).toLocaleString("th-TH")
+      :"-";
 
-    if (!data.length) {
-      throw new Error("ไม่พบข้อมูลในชีตแรก");
-    }
+    renderPivot();
 
-    const recognized = data.filter(o => {
-      const s = supplier(pick(o, [
-        "supplier_name","Supplier","Vendor","ซัพพลายเออร์"
-      ]));
-
-      return ["KTS","ADD","COMPAsia"].includes(s);
-    });
-
-    if (!recognized.length) {
-      throw new Error("ไม่พบข้อมูล Supplier KTS, ADD หรือ COMPAsia ในไฟล์");
-    }
-
-    data = recognized;
-    rows = data.map(normalizeRecord);
-
-    render();
-
-    localStorage.setItem("tradein_rows", JSON.stringify(rows));
-
-    const missing = rows.filter(x => !x.date || !x.sla).length;
-
-    try {
-      const response = await fetch("/api/import", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify({ items:rows })
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Server บันทึกข้อมูลไม่สำเร็จ");
-      }
-
-      let message = `
-        <div class="${missing ? "alertbox" : "successbox"}">
-          นำเข้าสำเร็จ ${rows.length} รายการ
-          ${missing ? ` · ${missing} รายการต้องตรวจสอบวันที่หรือ Supplier` : ""}
-        </div>
-      `;
-
-      if (result.alertsSent) {
-        message += `
-          <div class="successbox">
-            ส่งแจ้งเตือน LINE สำเร็จ ${result.alertCount} รายการ
-          </div>
-        `;
-      } else if (result.lineConfigured === false) {
-        message += `
-          <div class="note">
-            บันทึกข้อมูลบน Server แล้ว แต่ยังไม่ได้ตั้งค่า LINE Messaging API
-          </div>
-        `;
-      } else {
-        message += `
-          <div class="note">
-            บันทึกข้อมูลบน Server แล้ว ไม่มีรายการที่ต้องแจ้งเตือน
-          </div>
-        `;
-      }
-
-      $("importMsg").innerHTML = message;
-
-    } catch (serverError) {
-      $("importMsg").innerHTML = `
-        <div class="alertbox">
-          นำเข้าข้อมูลใน Browser แล้ว แต่เชื่อมต่อ Server ไม่สำเร็จ:
-          ${esc(serverError.message)}
-        </div>
-      `;
-    }
-
-  } catch (err) {
-    $("importMsg").innerHTML = `
-      <div class="alertbox">นำเข้าไม่สำเร็จ: ${esc(err.message)}</div>
+  }catch(error){
+    tbody.innerHTML=`
+      <tr>
+        <td colspan="3" class="empty">
+          ${esc(error.message)} · กรุณาลองรีเฟรช
+        </td>
+      </tr>
     `;
   }
 }
 
+function renderPivot(){
+  if(!pivotData)return;
 
-// เลือกไฟล์
-$("file").addEventListener("change", async e => {
-  await importFile(e.target.files[0]);
-  e.target.value = "";
+  const search=$("pivotSearch").value.trim().toLowerCase();
+  let html="";
+
+  for(const bucket of pivotData.buckets){
+    const branchRows=bucket.branches.filter(x=>
+      !search||x.branch.toLowerCase().includes(search)
+    );
+
+    if(search&&!branchRows.length)continue;
+
+    html+=`
+      <tr class="bucket-row">
+        <td>${esc(bucket.label)}</td>
+        <td></td>
+        <td style="text-align:right">
+          ${
+            bucket.count
+              ?`<button class="count-link"
+                  data-bucket="${esc(bucket.key)}"
+                  data-branch="__ALL__">${bucket.count}</button>`
+              :0
+          }
+        </td>
+      </tr>
+    `;
+
+    for(const item of branchRows){
+      html+=`
+        <tr class="branch-row">
+          <td></td>
+          <td>${esc(item.branch)}</td>
+          <td style="text-align:right">
+            <button class="count-link"
+              data-bucket="${esc(bucket.key)}"
+              data-branch="${esc(item.branch)}">${item.count}</button>
+          </td>
+        </tr>
+      `;
+    }
+  }
+
+  html+=`
+    <tr class="pivot-total">
+      <td>Total</td><td></td>
+      <td style="text-align:right">${pivotData.total??0}</td>
+    </tr>
+  `;
+
+  $("pivotRows").innerHTML=html;
+
+  $("pivotRows").querySelectorAll(".count-link").forEach(button=>{
+    button.addEventListener("click",()=>{
+      openDetails(button.dataset.bucket,button.dataset.branch);
+    });
+  });
+}
+
+// ========================================
+// DETAIL MODAL
+// ========================================
+
+async function openDetails(bucket,branch){
+  const bucketInfo=AGE_BUCKETS.find(x=>x.key===bucket);
+
+  currentDetailContext={bucket,branch};
+
+  $("detailTitle").textContent=
+    `รายละเอียดสินค้า · ${bucketInfo?.label||bucket}`;
+
+  $("detailSubtitle").textContent=
+    branch==="__ALL__"?"ทุกสาขา":"สาขา: "+branch;
+
+  $("detailRows").innerHTML=
+    '<tr><td colspan="5" class="empty">กำลังโหลด...</td></tr>';
+
+  $("detailSearch").value="";
+  $("detailModal").classList.add("open");
+
+  try{
+    const url=new URL("/api/report/details",location.origin);
+
+    url.searchParams.set("bucket",bucket);
+    url.searchParams.set("branch",branch);
+
+    const response=await fetch(url);
+    const data=await response.json();
+
+    if(!response.ok){
+      throw new Error(data.error||"โหลดรายละเอียดไม่สำเร็จ");
+    }
+
+    currentDetails=data.items||[];
+    renderDetails();
+
+    $("detailSubtitle").textContent=
+      `${branch==="__ALL__"?"ทุกสาขา":"สาขา: "+branch} · ${currentDetails.length} Serial Number`;
+
+  }catch(error){
+    $("detailRows").innerHTML=`
+      <tr><td colspan="5" class="empty">${esc(error.message)}</td></tr>
+    `;
+  }
+}
+
+function renderDetails(){
+  const q=$("detailSearch").value.toLowerCase();
+
+  const shown=currentDetails.filter(x=>
+    !q||[
+      x.noINV,x.product_sn,x.branch,x.supplier
+    ].join(" ").toLowerCase().includes(q)
+  );
+
+  $("detailRows").innerHTML=shown.length
+    ?shown.map(x=>`
+      <tr>
+        <td>${esc(x.noINV||"-")}</td>
+        <td>${esc(x.product_sn||"-")}</td>
+        <td>${esc(x.branch||"-")}</td>
+        <td>${esc(x.supplier||"-")}</td>
+        <td>${x.ageOfInv??"-"}</td>
+      </tr>
+    `).join("")
+    :'<tr><td colspan="5" class="empty">ไม่พบรายการ</td></tr>';
+}
+
+$("closeModalBtn").addEventListener("click",()=>
+  $("detailModal").classList.remove("open")
+);
+
+$("detailModal").addEventListener("click",e=>{
+  if(e.target===$("detailModal")){
+    $("detailModal").classList.remove("open");
+  }
 });
 
+$("detailSearch").addEventListener("input",renderDetails);
+$("pivotSearch").addEventListener("input",renderPivot);
+$("refreshPivotBtn").addEventListener("click",loadPivot);
 
-// ลากไฟล์วาง
-const dropZone = $("dropZone");
+// ========================================
+// EXPORT EXCEL
+// ========================================
 
-dropZone.addEventListener("dragover", e => {
-  e.preventDefault();
-  dropZone.style.background = "#eaf0ff";
+function downloadSheet(data,sheetName,fileName){
+  if(!window.XLSX){
+    alert("โหลดระบบ Excel ไม่สำเร็จ");
+    return;
+  }
+
+  const ws=XLSX.utils.json_to_sheet(data);
+  const wb=XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(wb,ws,sheetName);
+  XLSX.writeFile(wb,fileName);
+}
+
+$("exportPivotBtn").addEventListener("click",()=>{
+  if(!pivotData){
+    alert("ยังไม่มีข้อมูลรายงาน");
+    return;
+  }
+
+  const out=[];
+
+  for(const b of pivotData.buckets){
+    out.push({
+      age_ofINV:b.label,
+      สาขา:"",
+      "Count of product_sn":b.count
+    });
+
+    for(const x of b.branches){
+      out.push({
+        age_ofINV:"",
+        สาขา:x.branch,
+        "Count of product_sn":x.count
+      });
+    }
+  }
+
+  out.push({
+    age_ofINV:"Total",
+    สาขา:"",
+    "Count of product_sn":pivotData.total
+  });
+
+  downloadSheet(out,"Pivot Report","TradeIn_Age_Pivot.xlsx");
 });
 
-dropZone.addEventListener("dragleave", () => {
-  dropZone.style.background = "#f9fbff";
-});
-
-dropZone.addEventListener("drop", async e => {
-  e.preventDefault();
-  dropZone.style.background = "#f9fbff";
-
-  const file = e.dataTransfer.files[0];
-  if (file) await importFile(file);
-});
-
-
-// Filters
-["supplierFilter","statusFilter","search"].forEach(id => {
-  $(id).addEventListener("input", render);
-});
-
-
-// Export Excel
-$("exportBtn").onclick = () => {
-  if (!rows.length) {
+$("exportDetailBtn").addEventListener("click",()=>{
+  if(!rows.length){
     alert("ยังไม่มีข้อมูล");
     return;
   }
 
-  const data = rows.map(x => ({
-    "Trade-In No.":x.id,
-    "Branch":x.branch,
-    "Branch Code":x.code,
-    "Supplier":x.supplier,
-    "Trade-In Date":fmt(x.date),
-    "Age (Days)":x.age,
-    "SLA":x.sla,
-    "Overdue (Days)":x.over,
-    "SLA Status":statusLabel(x.state),
-    "Serial":x.serial,
-    "Product Code":x.product
-  }));
+  const out=rows
+    .filter(x=>x.state!=="returned"&&x.product_sn)
+    .map(x=>({
+      noINV:x.noINV,
+      product_sn:x.product_sn,
+      สาขา:x.branch,
+      Supplier:x.supplier,
+      age_ofINV:x.ageOfInv,
+      age_inBranch:x.age,
+      SLA:x.sla
+    }));
 
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
+  downloadSheet(out,"Serial Details","TradeIn_Serial_Details.xlsx");
+});
 
-  XLSX.utils.book_append_sheet(wb, ws, "Trade-In");
-  XLSX.writeFile(wb, "TradeIn_Monitoring_Report.xlsx");
+$("exportCurrentDetailBtn").addEventListener("click",()=>{
+  if(!currentDetails.length){
+    alert("ไม่มีรายละเอียดให้ส่งออก");
+    return;
+  }
+
+  downloadSheet(
+    currentDetails.map(x=>({
+      noINV:x.noINV,
+      product_sn:x.product_sn,
+      สาขา:x.branch,
+      Supplier:x.supplier,
+      age_ofINV:x.ageOfInv
+    })),
+    "Details",
+    "TradeIn_Selected_Details.xlsx"
+  );
+});
+
+// ========================================
+// IMPORT EXCEL
+// ========================================
+
+async function importFile(file){
+  if(!file)return;
+
+  $("importMsg").innerHTML=
+    '<div class="note">กำลังประมวลผลไฟล์ กรุณารอสักครู่...</div>';
+
+  try{
+    if(!window.XLSX){
+      throw new Error("ไม่สามารถโหลดระบบอ่าน Excel ได้ กรุณาตรวจสอบอินเทอร์เน็ต");
+    }
+
+    const wb=XLSX.read(await file.arrayBuffer(),{
+      type:"array",
+      cellDates:true
+    });
+
+    const sheet=wb.Sheets[wb.SheetNames[0]];
+
+    let data=XLSX.utils.sheet_to_json(sheet,{defval:""});
+
+    if(!data.length){
+      throw new Error("ไม่พบข้อมูลในชีตแรก");
+    }
+
+    const recognized=data.filter(o=>
+      ["KTS","ADD","COMPAsia"].includes(
+        supplier(pick(o,[
+          "supplier_name","Supplier","Vendor","ซัพพลายเออร์"
+        ]))
+      )
+    );
+
+    if(!recognized.length){
+      throw new Error("ไม่พบข้อมูล Supplier KTS, ADD หรือ COMPAsia ในไฟล์");
+    }
+
+    rows=recognized.map(normalizeRecord);
+
+    render();
+
+    localStorage.setItem("tradein_rows",JSON.stringify(rows));
+
+    const missing=rows.filter(x=>!x.sla||x.age==null).length;
+    const missingInvAge=rows.filter(x=>x.ageOfInv==null).length;
+
+    const response=await fetch("/api/import",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({items:rows})
+    });
+
+    const result=await response.json();
+
+    if(!response.ok){
+      throw new Error(result.error||"Server บันทึกข้อมูลไม่สำเร็จ");
+    }
+
+    let message=`
+      <div class="${missing||missingInvAge?"alertbox":"successbox"}">
+        นำเข้าสำเร็จ ${rows.length} รายการ
+        ${missing?` · ${missing} รายการต้องตรวจสอบอายุสาขาหรือ Supplier`:""}
+        ${missingInvAge?` · ${missingInvAge} รายการไม่มี age_ofINV`:""}
+      </div>
+    `;
+
+    if(result.alertsSent){
+      message+='<div class="successbox">ส่งแจ้งเตือน LINE สำเร็จ '+result.alertCount+' รายการ</div>';
+    }else if(result.lineConfigured===false){
+      message+='<div class="note">บันทึกข้อมูลบน Server แล้ว แต่ยังไม่ได้ตั้งค่า LINE Messaging API</div>';
+    }else{
+      message+='<div class="note">บันทึกข้อมูลบน Server แล้ว ไม่มีรายการที่ต้องแจ้งเตือน</div>';
+    }
+
+    $("importMsg").innerHTML=message;
+
+    await loadPivot();
+
+  }catch(error){
+    $("importMsg").innerHTML=`
+      <div class="alertbox">นำเข้าไม่สำเร็จ: ${esc(error.message)}</div>
+    `;
+  }
+}
+
+$("file").addEventListener("change",async e=>{
+  await importFile(e.target.files[0]);
+  e.target.value="";
+});
+
+const dropZone=$("dropZone");
+
+dropZone.addEventListener("dragover",e=>{
+  e.preventDefault();
+  dropZone.style.background="#eaf0ff";
+});
+
+dropZone.addEventListener("dragleave",()=>{
+  dropZone.style.background="#f9fbff";
+});
+
+dropZone.addEventListener("drop",async e=>{
+  e.preventDefault();
+  dropZone.style.background="#f9fbff";
+
+  if(e.dataTransfer.files[0]){
+    await importFile(e.dataTransfer.files[0]);
+  }
+});
+
+// ========================================
+// FILTERS
+// ========================================
+
+["supplierFilter","statusFilter","search"].forEach(id=>{
+  $(id).addEventListener("input",render);
+});
+
+// ========================================
+// EXPORT MAIN REPORT
+// ========================================
+
+$("exportBtn").onclick=()=>{
+  if(!rows.length){
+    alert("ยังไม่มีข้อมูล");
+    return;
+  }
+
+  downloadSheet(
+    rows.map(x=>({
+      noINV:x.noINV,
+      product_sn:x.product_sn,
+      Branch:x.branch,
+      "Branch Code":x.code,
+      Supplier:x.supplier,
+      "Trade-In Date":fmt(x.date),
+      age_ofINV:x.ageOfInv,
+      age_inBranch:x.age,
+      SLA:x.sla,
+      "Overdue (Days)":x.over,
+      SLA_Status:statusLabel(x.state)
+    })),
+    "Trade-In",
+    "TradeIn_Monitoring_Report.xlsx"
+  );
 };
 
+// ========================================
+// NOTIFICATION HISTORY
+// ========================================
 
-// โหลดประวัติการแจ้งเตือนจาก Server
-async function loadHistory() {
-  const tbody = $("historyRows");
+async function loadHistory(){
+  const tbody=$("historyRows");
 
-  tbody.innerHTML =
-    `<tr><td colspan="4" class="empty">กำลังโหลดประวัติ...</td></tr>`;
+  tbody.innerHTML=
+    '<tr><td colspan="4" class="empty">กำลังโหลดประวัติ...</td></tr>';
 
-  try {
-    const response = await fetch("/api/notifications");
+  try{
+    const response=await fetch("/api/notifications");
 
-    if (!response.ok) {
+    if(!response.ok){
       throw new Error("โหลดประวัติไม่สำเร็จ");
     }
 
-    const data = await response.json();
+    const data=await response.json();
 
-    tbody.innerHTML = data.length
-      ? data.map(x => `
+    tbody.innerHTML=data.length
+      ?data.map(x=>`
         <tr>
           <td>${esc(new Date(x.createdAt).toLocaleString("th-TH"))}</td>
           <td>${esc(x.heading)}</td>
           <td>${esc(x.count)} รายการ</td>
-          <td>${esc((x.details || []).join(" / "))}</td>
+          <td>${esc((x.details||[]).join(" / "))}</td>
         </tr>
       `).join("")
-      : `<tr><td colspan="4" class="empty">ยังไม่มีประวัติการแจ้งเตือน</td></tr>`;
+      :'<tr><td colspan="4" class="empty">ยังไม่มีประวัติการแจ้งเตือน</td></tr>';
 
-  } catch (error) {
-    tbody.innerHTML = `
+  }catch(error){
+    tbody.innerHTML=`
       <tr><td colspan="4" class="empty">${esc(error.message)}</td></tr>
     `;
   }
 }
 
+// ========================================
+// LOAD DATA FROM SERVER
+// ========================================
 
-// โหลดข้อมูลจาก Browser และ Server
-async function loadData() {
-  try {
-    const saved = JSON.parse(localStorage.getItem("tradein_rows") || "[]");
+async function loadData(){
+  try{
+    const response=await fetch("/api/data");
 
-    if (saved.length) {
-      rows = saved.map(x => ({
+    if(!response.ok){
+      throw new Error("โหลดข้อมูลจาก Server ไม่สำเร็จ");
+    }
+
+    const data=await response.json();
+
+    if(Array.isArray(data.items)){
+      rows=data.items.map(x=>({
         ...x,
-        date:x.date ? new Date(x.date) : null
+        date:x.date?new Date(x.date):null,
+        ageOfInv:x.ageOfInv??x.age_ofINV??null,
+        product_sn:x.product_sn??x.serial??"",
+        noINV:x.noINV??""
       }));
+
+      localStorage.setItem("tradein_rows",JSON.stringify(rows));
 
       render();
     }
-  } catch (e) {
-    console.error("Browser data error:", e);
-  }
 
-  try {
-    const response = await fetch("/api/data");
+  }catch(error){
+    console.warn(error.message);
 
-    if (!response.ok) return;
+    try{
+      const saved=JSON.parse(
+        localStorage.getItem("tradein_rows")||"[]"
+      );
 
-    const data = await response.json();
-
-    if (Array.isArray(data.items) && data.items.length) {
-      rows = data.items.map(x => ({
+      rows=saved.map(x=>({
         ...x,
-        date:x.date ? new Date(x.date) : null
+        date:x.date?new Date(x.date):null
       }));
 
-      localStorage.setItem("tradein_rows", JSON.stringify(rows));
       render();
-    }
-  } catch (e) {
-    console.log("Server data unavailable:", e.message);
+
+    }catch(_){}
   }
 }
 
 loadData();
-
 </script>
 </body>
 </html>
