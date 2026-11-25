@@ -1,4 +1,3 @@
-
 require("dotenv").config();
 
 const express = require("express");
@@ -11,23 +10,33 @@ const app = express();
 
 app.use(express.json({
   limit: "25mb",
-  verify: (req, res, buf) => {
-    req.rawBody = buf;
-  }
+  verify: (req, res, buf) => { req.rawBody = buf; }
 }));
-
 app.use(express.static(path.join(__dirname, "public")));
 
 const DATA_FILE = path.join(__dirname, "tradein-data.json");
 const HISTORY_FILE = path.join(__dirname, "notification-history.json");
 
-const SLA = {
-  KTS: 15,
-  ADD: 15,
-  COMPASIA: 10
+const SLA = { KTS: 15, ADD: 15, COMPASIA: 10 };
+
+const SUPPLIER_NAMES = {
+  KTS: "Trade In Kaitorasap",
+  ADD: "Trade In Addsign TM",
+  COMPASIA: "Trade In CompAsia"
 };
 
-// ช่วงอายุ Invoice แบบไม่ซ้ำกัน
+function normalizeSupplier(value) {
+  const key = String(value || "").toUpperCase().replace(/[^A-Z]/g, "");
+  if (key.includes("KTS") || key.includes("KAITORASAP")) return "KTS";
+  if (key.includes("ADD") || key.includes("ADDSIGN")) return "ADD";
+  if (key.includes("COMP") || key.includes("ASIA")) return "COMPASIA";
+  return key;
+}
+
+function getSupplierName(value) {
+  return SUPPLIER_NAMES[normalizeSupplier(value)] || String(value || "ไม่ระบุ");
+}
+
 const AGE_BUCKETS = [
   { key: "1-15", label: "1-15 Day", min: 1, max: 15 },
   { key: "16-20", label: "16-20 Day", min: 16, max: 20 },
@@ -39,15 +48,9 @@ const AGE_BUCKETS = [
 ];
 
 function readData() {
-  if (!fs.existsSync(DATA_FILE)) {
-    return { items: [], importedAt: null };
-  }
-
+  if (!fs.existsSync(DATA_FILE)) return { items: [], importedAt: null };
   try {
-    const data = JSON.parse(
-      fs.readFileSync(DATA_FILE, "utf8")
-    );
-
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, "utf8"));
     return {
       items: Array.isArray(data.items) ? data.items : [],
       importedAt: data.importedAt || null
@@ -60,39 +63,27 @@ function readData() {
 
 function elapsedDays(importedAt) {
   if (!importedAt) return 0;
-
   const imported = new Date(importedAt);
-
   if (Number.isNaN(imported.getTime())) return 0;
-
-  return Math.max(
-    0,
-    Math.floor((Date.now() - imported.getTime()) / 86400000)
-  );
+  return Math.max(0, Math.floor((Date.now() - imported.getTime()) / 86400000));
 }
 
 function currentItems(data) {
   const elapsed = elapsedDays(data.importedAt);
 
   return (data.items || []).map(item => {
-    const supplier = String(item.supplier || "");
-    const sla = SLA[supplier.toUpperCase()] || null;
+    const supplier = normalizeSupplier(item.supplier || item.supplier_name || "");
+    const supplierName = getSupplierName(supplier);
+    const sla = SLA[supplier] || null;
 
-    const age = Number.isFinite(Number(item.age)) &&
-      item.age !== "" &&
-      item.age != null
+    const age = Number.isFinite(Number(item.age)) && item.age !== "" && item.age != null
       ? Number(item.age) + elapsed
       : null;
 
-    const rawAgeOfInv =
-      item.ageOfInv ?? item.age_ofINV ?? item.age_ofInv;
-
-    const ageOfInv =
-      rawAgeOfInv !== "" &&
-      rawAgeOfInv != null &&
-      Number.isFinite(Number(rawAgeOfInv))
-        ? Number(rawAgeOfInv) + elapsed
-        : null;
+    const rawAgeOfInv = item.ageOfInv ?? item.age_ofINV ?? item.age_ofInv;
+    const ageOfInv = rawAgeOfInv !== "" && rawAgeOfInv != null && Number.isFinite(Number(rawAgeOfInv))
+      ? Number(rawAgeOfInv) + elapsed
+      : null;
 
     const state = item.state === "returned"
       ? "returned"
@@ -106,39 +97,27 @@ function currentItems(data) {
 
     return {
       ...item,
+      supplier,
+      supplier_name: supplierName,
       noINV: String(item.noINV || ""),
       product_sn: String(item.product_sn || item.serial || ""),
       age,
       ageOfInv,
       sla,
-      over: age != null && sla != null
-        ? Math.max(0, age - sla)
-        : null,
+      over: age != null && sla != null ? Math.max(0, age - sla) : null,
       state
     };
   });
 }
 
 function getAgeBucket(age) {
-  if (
-    age === null ||
-    age === undefined ||
-    age === "" ||
-    !Number.isFinite(Number(age))
-  ) {
-    return null;
-  }
-
+  if (!Number.isFinite(Number(age))) return null;
   return AGE_BUCKETS.find(bucket =>
-    Number(age) >= bucket.min &&
-    Number(age) <= bucket.max
+    Number(age) >= bucket.min && Number(age) <= bucket.max
   ) || null;
 }
 
-// ========================================
-// LINE WEBHOOK
-// ========================================
-
+// LINE webhook
 app.post("/callback", (req, res) => {
   const signature = req.headers["x-line-signature"];
   const secret = process.env.LINE_CHANNEL_SECRET;
@@ -147,8 +126,7 @@ app.post("/callback", (req, res) => {
     return res.status(401).send("Unauthorized");
   }
 
-  const hash = crypto
-    .createHmac("sha256", secret)
+  const hash = crypto.createHmac("sha256", secret)
     .update(req.rawBody)
     .digest("base64");
 
@@ -166,7 +144,6 @@ app.post("/callback", (req, res) => {
     if (event.source?.type === "group") {
       console.log("LINE GROUP ID:", event.source.groupId);
     }
-
     if (event.source?.type === "room") {
       console.log("LINE ROOM ID:", event.source.roomId);
     }
@@ -174,10 +151,6 @@ app.post("/callback", (req, res) => {
 
   res.status(200).send("OK");
 });
-
-// ========================================
-// GROUP ITEMS FOR LINE
-// ========================================
 
 function groupItems(items) {
   const grouped = {};
@@ -194,11 +167,7 @@ function groupItems(items) {
     }
 
     grouped[key].count++;
-
-    grouped[key].maxOver = Math.max(
-      grouped[key].maxOver,
-      item.over || 0
-    );
+    grouped[key].maxOver = Math.max(grouped[key].maxOver, item.over || 0);
 
     if (item.state === "late") {
       grouped[key].state = "late";
@@ -214,34 +183,20 @@ function groupItems(items) {
   );
 }
 
-// ========================================
-// NOTIFICATION HISTORY
-// ========================================
-
 function saveNotificationHistory(record) {
   let history = [];
 
   if (fs.existsSync(HISTORY_FILE)) {
     try {
-      history = JSON.parse(
-        fs.readFileSync(HISTORY_FILE, "utf8")
-      );
+      history = JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8"));
     } catch (_) {
       history = [];
     }
   }
 
   history.unshift(record);
-
-  fs.writeFileSync(
-    HISTORY_FILE,
-    JSON.stringify(history.slice(0, 200), null, 2)
-  );
+  fs.writeFileSync(HISTORY_FILE, JSON.stringify(history.slice(0, 200), null, 2));
 }
-
-// ========================================
-// SEND LINE
-// ========================================
 
 async function pushLine(items, heading) {
   const token = process.env.LINE_CHANNEL_ACCESS_TOKEN;
@@ -256,30 +211,20 @@ async function pushLine(items, heading) {
   }
 
   const lines = groupItems(items);
-
   const message =
-    `${heading}\n` +
-    `พบ ${items.length} รายการ\n` +
-    `${lines.join("\n")}\n\n` +
-    `กรุณาตรวจสอบ Trade-In Monitoring`;
+    `${heading}\nพบ ${items.length} รายการ\n${lines.join("\n")}\n\nกรุณาตรวจสอบ Trade-In Monitoring`;
 
-  const response = await fetch(
-    "https://api.line.me/v2/bot/message/push",
-    {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`
-      },
-      body: JSON.stringify({
-        to,
-        messages: [{
-          type: "text",
-          text: message.slice(0, 4900)
-        }]
-      })
-    }
-  );
+  const response = await fetch("https://api.line.me/v2/bot/message/push", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      to,
+      messages: [{ type: "text", text: message.slice(0, 4900) }]
+    })
+  });
 
   const body = await response.text();
 
@@ -297,37 +242,27 @@ async function pushLine(items, heading) {
   return { sent: true, configured: true };
 }
 
-// ========================================
-// API: GET DATA
-// ========================================
-
+// API ข้อมูล Trade-In
 app.get("/api/data", (req, res) => {
   const data = readData();
-
   res.json({
     items: currentItems(data),
     importedAt: data.importedAt
   });
 });
 
-// ========================================
-// API: PIVOT REPORT
-// ========================================
-
+// API Pivot Report
 app.get("/api/report/pivot", (req, res) => {
   const data = readData();
 
   const items = currentItems(data).filter(item =>
-    item.state !== "returned" &&
-    String(item.product_sn || "").trim()
+    item.state !== "returned" && item.product_sn.trim()
   );
 
   const branches = [
-    ...new Set(
-      items.map(item =>
-        String(item.branch || "ไม่ระบุสาข").trim() || "ไม่ระบุสาข"
-      )
-    )
+    ...new Set(items.map(item =>
+      String(item.branch || "ไม่ระบุสาข").trim() || "ไม่ระบุสาข"
+    ))
   ].sort((a, b) => a.localeCompare(b, "th"));
 
   const buckets = AGE_BUCKETS.map(bucket => {
@@ -353,18 +288,13 @@ app.get("/api/report/pivot", (req, res) => {
   res.json({
     buckets,
     branches,
-    total: items.filter(item => getAgeBucket(item.ageOfInv)).length,
-    unclassified: items.filter(item =>
-      !getAgeBucket(item.ageOfInv)
-    ).length,
+    total: items.length,
+    unclassified: items.filter(item => !getAgeBucket(item.ageOfInv)).length,
     importedAt: data.importedAt
   });
 });
 
-// ========================================
-// API: PIVOT DETAILS
-// ========================================
-
+// API รายละเอียด Pivot
 app.get("/api/report/details", (req, res) => {
   const { bucket, branch } = req.query;
 
@@ -376,49 +306,35 @@ app.get("/api/report/details", (req, res) => {
 
   const data = readData();
 
-  const items = currentItems(data)
-    .filter(item => {
-      if (
-        item.state === "returned" ||
-        !String(item.product_sn || "").trim()
-      ) {
-        return false;
-      }
+  const items = currentItems(data).filter(item => {
+    if (item.state === "returned" || !String(item.product_sn || "").trim()) {
+      return false;
+    }
 
-      const itemBranch =
-        String(item.branch || "ไม่ระบุสาข").trim() || "ไม่ระบุสาข";
+    const itemBranch =
+      String(item.branch || "ไม่ระบุสาข").trim() || "ไม่ระบุสาข";
 
-      return (
-        getAgeBucket(item.ageOfInv)?.key === bucket &&
-        (branch === "__ALL__" || itemBranch === branch)
-      );
-    })
-    .map(item => ({
-      noINV: item.noINV || "-",
-      product_sn: item.product_sn,
-      branch: item.branch || "ไม่ระบุสาข",
-      supplier: item.supplier || "-",
-      ageOfInv: item.ageOfInv,
-      age: item.age,
-      date: item.date || null
-    }));
+    return (
+      getAgeBucket(item.ageOfInv)?.key === bucket &&
+      (branch === "__ALL__" || itemBranch === branch)
+    );
+  }).map(item => ({
+    noINV: item.noINV || "-",
+    product_sn: item.product_sn,
+    branch: item.branch || "ไม่ระบุสาข",
+    supplier: item.supplier || "-",
+    supplier_name: item.supplier_name || getSupplierName(item.supplier),
+    ageOfInv: item.ageOfInv,
+    age: item.age,
+    date: item.date || null
+  }));
 
-  res.json({
-    items,
-    count: items.length,
-    bucket,
-    branch
-  });
+  res.json({ items, count: items.length, bucket, branch });
 });
 
-// ========================================
-// API: IMPORT EXCEL DATA
-// ========================================
-
+// API นำเข้า Excel
 app.post("/api/import", async (req, res) => {
-  const items = Array.isArray(req.body.items)
-    ? req.body.items
-    : [];
+  const items = Array.isArray(req.body.items) ? req.body.items : [];
 
   if (!items.length) {
     return res.status(400).json({ error: "No items" });
@@ -429,20 +345,14 @@ app.post("/api/import", async (req, res) => {
     importedAt: new Date().toISOString()
   };
 
-  fs.writeFileSync(
-    DATA_FILE,
-    JSON.stringify(data, null, 2)
-  );
+  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 
   const candidates = items.filter(item =>
     item.state === "near" || item.state === "late"
   );
 
   try {
-    const result = await pushLine(
-      candidates,
-      "🚨 TRADE-IN SLA ALERT"
-    );
+    const result = await pushLine(candidates, "🚨 TRADE-IN SLA ALERT");
 
     res.json({
       saved: true,
@@ -450,7 +360,6 @@ app.post("/api/import", async (req, res) => {
       lineConfigured: result.configured,
       alertCount: candidates.length
     });
-
   } catch (error) {
     res.status(502).json({
       saved: true,
@@ -461,10 +370,6 @@ app.post("/api/import", async (req, res) => {
   }
 });
 
-// ========================================
-// API: MANUAL LINE ALERT
-// ========================================
-
 app.post("/api/line-alert", async (req, res) => {
   try {
     const result = await pushLine(
@@ -473,17 +378,10 @@ app.post("/api/line-alert", async (req, res) => {
     );
 
     res.json(result);
-
   } catch (error) {
-    res.status(502).json({
-      error: error.message
-    });
+    res.status(502).json({ error: error.message });
   }
 });
-
-// ========================================
-// API: NOTIFICATION HISTORY
-// ========================================
 
 app.get("/api/notifications", (req, res) => {
   try {
@@ -491,10 +389,7 @@ app.get("/api/notifications", (req, res) => {
       return res.json([]);
     }
 
-    return res.json(
-      JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8"))
-    );
-
+    return res.json(JSON.parse(fs.readFileSync(HISTORY_FILE, "utf8")));
   } catch (_) {
     return res.status(500).json({
       error: "Cannot read notification history"
@@ -502,40 +397,22 @@ app.get("/api/notifications", (req, res) => {
   }
 });
 
-// ========================================
-// DAILY SLA REMINDER: 08:00 BANGKOK
-// ========================================
+// แจ้งเตือนประจำวัน 08:00 น. เวลาไทย
+cron.schedule("0 8 * * *", async () => {
+  try {
+    const items = currentItems(readData()).filter(item =>
+      item.state === "near" || item.state === "late"
+    );
 
-cron.schedule(
-  "0 8 * * *",
-  async () => {
-    try {
-      const items = currentItems(readData()).filter(item =>
-        item.state === "near" || item.state === "late"
-      );
-
-      if (items.length) {
-        await pushLine(
-          items,
-          "📊 TRADE-IN DAILY SLA REMINDER"
-        );
-      }
-
-    } catch (error) {
-      console.error(
-        "Daily Trade-In alert failed:",
-        error.message
-      );
+    if (items.length) {
+      await pushLine(items, "📊 TRADE-IN DAILY SLA REMINDER");
     }
-  },
-  {
-    timezone: "Asia/Bangkok"
+  } catch (error) {
+    console.error("Daily Trade-In alert failed:", error.message);
   }
-);
-
-// ========================================
-// START SERVER
-// ========================================
+}, {
+  timezone: "Asia/Bangkok"
+});
 
 const port = process.env.PORT || 3000;
 
